@@ -1,1 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter Home — Sample Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d1117;
+  --navy2:#161b24;
+  --navy3:#1e2633;
+  --navy4:#252d3d;
+  --amber:#e8a84c;
+  --amber2:#f0c070;
+  --amber-dim:rgba(232,168,76,0.12);
+  --amber-dim2:rgba(232,168,76,0.06);
+  --text:#e8eaf0;
+  --text2:#8892a4;
+  --text3:#4a5568;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.1);
+  --success:#2d6a4f;
+  --success-text:#74c69d;
+  --warning:#7c4f0a;
+  --warning-text:#ffc107;
+  --info:#1a3a5c;
+  --info-text:#74b9ff;
+  --danger:#5c1a1a;
+  --danger-text:#ff7675;
+  --radius:10px;
+  --radius-lg:16px;
+  --radius-xl:20px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
 
+/* LAYOUT */
+.app{max-width:1000px;margin:0 auto;padding:0 1.5rem 4rem}
+
+/* HEADER */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 0 2rem;border-bottom:1px solid var(--border);margin-bottom:2rem;flex-wrap:wrap;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:40px;height:40px;background:var(--amber-dim);border:1px solid rgba(232,168,76,0.3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--amber)}
+.brand-text h1{font-family:'DM Serif Display',serif;font-size:18px;font-weight:400;color:var(--text);letter-spacing:0.01em}
+.brand-text p{font-size:11px;color:var(--text3);letter-spacing:0.05em;text-transform:uppercase;margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.sheet-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:7px 14px;border:1px solid var(--border2);border-radius:8px;text-decoration:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;background:var(--navy2)}
+.sheet-btn:hover{color:var(--amber);border-color:rgba(232,168,76,0.4);background:var(--amber-dim)}
+
+/* TABS */
+.tab-row{display:flex;gap:4px;margin-bottom:2rem;background:var(--navy2);padding:4px;border-radius:12px;border:1px solid var(--border)}
+.tab{flex:1;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text2);border-radius:9px;transition:all 0.2s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px}
+.tab.active{background:var(--navy4);color:var(--amber);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.tab:hover:not(.active){color:var(--text);background:var(--navy3)}
+.section{display:none}.section.active{display:block}
+
+/* CARDS */
+.card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1rem;animation:fadeUp 0.3s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem}
+.card-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.card-icon.amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(232,168,76,0.2)}
+.card-icon.blue{background:rgba(116,185,255,0.1);color:#74b9ff;border:1px solid rgba(116,185,255,0.2)}
+.card-icon.green{background:rgba(116,198,157,0.1);color:#74c69d;border:1px solid rgba(116,198,157,0.2)}
+.card-icon.purple{background:rgba(162,155,254,0.1);color:#a29bfe;border:1px solid rgba(162,155,254,0.2)}
+.card-title{font-size:13px;font-weight:600;color:var(--text);letter-spacing:0.02em}
+.card-sub{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.06em}
+.required::after{content:' *';color:var(--amber)}
+input[type=text],input[type=number],input[type=date],select,textarea{
+  font-size:13px;color:var(--text);background:var(--navy3);
+  border:1px solid var(--border2);border-radius:8px;
+  padding:9px 12px;width:100%;font-family:'DM Sans',sans-serif;
+  transition:all 0.2s;appearance:none;-webkit-appearance:none;
+}
+input::placeholder,textarea::placeholder{color:var(--text3)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(232,168,76,0.5);background:var(--navy4);box-shadow:0 0 0 3px rgba(232,168,76,0.08)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238892a4' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+
+/* UPLOAD */
+.upload-zone{border:1px dashed var(--border2);border-radius:10px;padding:24px 16px;text-align:center;cursor:pointer;background:var(--navy3);transition:all 0.2s}
+.upload-zone:hover{border-color:rgba(232,168,76,0.4);background:var(--amber-dim2)}
+.upload-zone i{font-size:28px;color:var(--text3);display:block;margin-bottom:8px;transition:color 0.2s}
+.upload-zone:hover i{color:var(--amber)}
+.upload-zone p{font-size:13px;color:var(--text2);font-weight:500}
+.upload-zone span{font-size:11px;color:var(--text3);margin-top:3px;display:block}
+.file-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.file-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);background:var(--navy4);padding:6px 10px;border-radius:8px;border:1px solid var(--border)}
+.remove-file{margin-left:auto;cursor:pointer;color:var(--text3);font-size:13px;border:none;background:none;padding:0 2px;transition:color 0.2s}
+.remove-file:hover{color:var(--danger-text)}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:1.5rem}
+.btn{padding:10px 22px;font-size:13px;font-weight:600;border-radius:9px;border:1px solid var(--border2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;display:inline-flex;align-items:center;gap:7px;letter-spacing:0.01em}
+.btn-primary{background:var(--amber);color:var(--navy);border-color:var(--amber)}
+.btn-primary:hover{background:var(--amber2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(232,168,76,0.3)}
+.btn-primary:active{transform:translateY(0)}
+.btn-secondary{background:var(--navy3);color:var(--text2);border-color:var(--border2)}
+.btn-secondary:hover{background:var(--navy4);color:var(--text)}
+
+/* STATUS */
+.status-msg{padding:12px 16px;font-size:13px;border-radius:9px;margin-top:1rem;display:none;font-weight:500}
+.status-success{background:rgba(116,198,157,0.12);color:var(--success-text);border:1px solid rgba(116,198,157,0.2);display:flex !important;align-items:center;gap:8px}
+.status-error{background:rgba(255,118,117,0.1);color:var(--danger-text);border:1px solid rgba(255,118,117,0.2);display:flex !important;align-items:center;gap:8px}
+
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.metric-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;position:relative;overflow:hidden;animation:fadeUp 0.3s ease both}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:0.4}
+.metric-card .mlabel{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:8px}
+.metric-card .mval{font-family:'DM Serif Display',serif;font-size:32px;color:var(--amber);line-height:1}
+.metric-card .msub{font-size:11px;color:var(--text3);margin-top:6px}
+
+/* MEMBER CARDS */
+.member-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+.member-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;animation:fadeUp 0.3s ease both}
+.member-card .mname{font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.member-card .mspend{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);margin-bottom:4px}
+.member-card .mdetail{font-size:11px;color:var(--text3)}
+
+/* CAT GRID */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cat-card{background:var(--navy2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;animation:fadeUp 0.3s ease both}
+.cat-card .clabel{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:6px}
+.cat-card .cval{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text)}
+
+/* TABLE */
+.filter-row{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
+.filter-row input{max-width:220px;background:var(--navy2)}
+.filter-row select{max-width:170px;background:var(--navy2)}
+.search-wrap{position:relative;flex:1;max-width:280px}
+.search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none}
+.search-wrap input{padding-left:34px}
+.table-wrap{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.orders-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.orders-table th{text-align:left;padding:11px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);border-bottom:1px solid var(--border);background:var(--navy3)}
+.orders-table td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background 0.15s}
+.orders-table tr:last-child td{border-bottom:none}
+.orders-table tbody tr:hover td{background:var(--navy3)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.02em}
+.badge-alibaba{background:rgba(255,167,38,0.12);color:#ffb74d;border:1px solid rgba(255,167,38,0.2)}
+.badge-email{background:rgba(116,185,255,0.1);color:#74b9ff;border:1px solid rgba(116,185,255,0.2)}
+.badge-placed{background:rgba(255,193,7,0.1);color:#ffc107;border:1px solid rgba(255,193,7,0.2)}
+.badge-received{background:rgba(116,198,157,0.12);color:#74c69d;border:1px solid rgba(116,198,157,0.2)}
+.badge-approved{background:rgba(0,206,201,0.1);color:#00cec9;border:1px solid rgba(0,206,201,0.2)}
+.badge-transit{background:rgba(116,185,255,0.1);color:#74b9ff;border:1px solid rgba(116,185,255,0.2)}
+.badge-rejected{background:rgba(255,118,117,0.1);color:#ff7675;border:1px solid rgba(255,118,117,0.2)}
+
+/* SECTION LABEL */
+.sec-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin:0.25rem 0 1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px}
+
+.empty-state{text-align:center;padding:3.5rem 1rem;color:var(--text3)}
+.empty-state i{font-size:36px;display:block;margin-bottom:12px;opacity:0.4}
+.empty-state p{font-size:14px}
+.char-counter{font-size:11px;color:var(--text3);text-align:right;margin-top:2px}
+
+@media(max-width:640px){
+  .form-grid,.form-grid.three{grid-template-columns:1fr}
+  .form-group.full{grid-column:1}
+  .metrics-grid{grid-template-columns:1fr 1fr}
+  .member-grid{grid-template-columns:1fr}
+  .tab-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon"><i class="ti ti-clipboard-list"></i></div>
+      <div class="brand-text">
+        <h1>Sample Order Tracker</h1>
+        <p>Chapter Home · Canton Fair 2026</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a class="sheet-btn" href="https://docs.google.com/spreadsheets/d/1RLfuv9bWV2sQM9SREQqjR-3mvYDN0ST5i4-2oGjcbVE/edit" target="_blank">
+        <i class="ti ti-table" style="font-size:13px"></i> Google Sheet
+      </a>
+    </div>
+  </div>
+
+  <div class="tab-row">
+    <button class="tab active" onclick="switchTab('log')"><i class="ti ti-plus" style="font-size:14px"></i> Log order</button>
+    <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-layout-dashboard" style="font-size:14px"></i> Dashboard</button>
+    <button class="tab" onclick="switchTab('orders')"><i class="ti ti-list-details" style="font-size:14px"></i> All orders</button>
+  </div>
+
+  <!-- LOG ORDER -->
+  <div id="tab-log" class="section active">
+
+    <div class="card" style="animation-delay:0.05s">
+      <div class="card-header">
+        <div class="card-icon amber"><i class="ti ti-user"></i></div>
+        <div><div class="card-title">Order details</div><div class="card-sub">Who is placing this order and when</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="required">Order date</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="form-group">
+          <label class="required">Team member</label>
+          <select id="f-member">
+            <option value="">— Select member —</option>
+            <option>Dhiraj</option>
+            <option>Dheeraj</option>
+            <option>Nitin</option>
+            <option>Akarsh</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="animation-delay:0.1s">
+      <div class="card-header">
+        <div class="card-icon blue"><i class="ti ti-building-factory"></i></div>
+        <div><div class="card-title">Supplier details</div><div class="card-sub">Who are you ordering from</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="required">Supplier name</label>
+          <input type="text" id="f-supplier" placeholder="e.g. Guangzhou Kitchenware Co.">
+        </div>
+        <div class="form-group">
+          <label>Contact person</label>
+          <input type="text" id="f-contact" placeholder="Name / WeChat / email">
+        </div>
+        <div class="form-group">
+          <label class="required">Order channel</label>
+          <select id="f-channel">
+            <option value="">— Select channel —</option>
+            <option>Alibaba</option>
+            <option>Email</option>
+            <option>WeChat</option>
+            <option>WhatsApp</option>
+            <option>Direct / In-person</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Canton Fair booth no.</label>
+          <input type="text" id="f-booth" placeholder="e.g. Hall 9.2 A12">
+        </div>
+        <div class="form-group">
+          <label>Supplier country</label>
+          <select id="f-country">
+            <option value="">— Select —</option>
+            <option>China</option>
+            <option>India</option>
+            <option>Vietnam</option>
+            <option>Bangladesh</option>
+            <option>Turkey</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Alibaba store link</label>
+          <input type="text" id="f-link" placeholder="https://…">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="animation-delay:0.15s">
+      <div class="card-header">
+        <div class="card-icon green"><i class="ti ti-package"></i></div>
+        <div><div class="card-title">Product details</div><div class="card-sub">What are you sampling</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="required">Product name / description</label>
+          <input type="text" id="f-product" placeholder="e.g. Stainless Steel Lunch Box 1.2L, leak-proof lid">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="f-category">
+            <option value="">— Select —</option>
+            <option>Kitchenware</option>
+            <option>Home Storage &amp; Accessories</option>
+            <option>Home Appliances</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Target brand</label>
+          <select id="f-brand">
+            <option value="">— Select —</option>
+            <option>Everyday Essentials</option>
+            <option>Small Appliances</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Qty (samples)</label>
+          <input type="number" id="f-qty" placeholder="e.g. 2" min="1">
+        </div>
+        <div class="form-group">
+          <label>SKU / Model no.</label>
+          <input type="text" id="f-sku" placeholder="Supplier's code">
+        </div>
+        <div class="form-group">
+          <label>Material / composition</label>
+          <input type="text" id="f-material" placeholder="e.g. 304 stainless steel">
+        </div>
+        <div class="form-group">
+          <label>MOQ (quoted)</label>
+          <input type="text" id="f-moq" placeholder="e.g. 500 pcs">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="animation-delay:0.2s">
+      <div class="card-header">
+        <div class="card-icon amber"><i class="ti ti-coins"></i></div>
+        <div><div class="card-title">Financials</div><div class="card-sub">Cost and payment details</div></div>
+      </div>
+      <div class="form-grid three">
+        <div class="form-group">
+          <label class="required">Sample amount</label>
+          <input type="number" id="f-amount" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>Shipping cost</label>
+          <input type="number" id="f-shipping" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>Currency</label>
+          <select id="f-currency">
+            <option>USD</option><option>CNY</option><option>INR</option><option>EUR</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="required">Payment mode</label>
+          <select id="f-payment">
+            <option value="">— Select —</option>
+            <option>Alibaba Trade Assurance</option>
+            <option>PayPal</option>
+            <option>Bank transfer (SWIFT)</option>
+            <option>Alipay</option>
+            <option>WeChat Pay</option>
+            <option>Cash</option>
+            <option>Credit card</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Payment status</label>
+          <select id="f-paystatus">
+            <option value="">— Select —</option>
+            <option>Paid</option><option>Pending</option><option>Partial</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Proforma invoice no.</label>
+          <input type="text" id="f-pi" placeholder="PI-2026-001">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="animation-delay:0.25s">
+      <div class="card-header">
+        <div class="card-icon purple"><i class="ti ti-truck"></i></div>
+        <div><div class="card-title">Logistics &amp; tracking</div><div class="card-sub">Shipment and delivery info</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Sample status</label>
+          <select id="f-status">
+            <option value="">— Select —</option>
+            <option>Order placed</option><option>In transit</option><option>Received</option>
+            <option>Under review</option><option>Approved</option><option>Rejected</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Expected delivery</label>
+          <input type="date" id="f-eta">
+        </div>
+        <div class="form-group">
+          <label>Tracking number</label>
+          <input type="text" id="f-tracking" placeholder="Courier tracking ID">
+        </div>
+        <div class="form-group">
+          <label>Courier</label>
+          <select id="f-courier">
+            <option value="">— Select —</option>
+            <option>DHL</option><option>FedEx</option><option>UPS</option>
+            <option>SF Express</option><option>EMS</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="animation-delay:0.3s">
+      <div class="card-header">
+        <div class="card-icon green"><i class="ti ti-star"></i></div>
+        <div><div class="card-title">Evaluation &amp; notes</div><div class="card-sub">Quality assessment and follow-up</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Repurchase intent</label>
+          <select id="f-intent">
+            <option value="">— Not assessed yet —</option>
+            <option>High – likely bulk order</option>
+            <option>Medium – needs revision</option>
+            <option>Low – not pursuing</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quality rating</label>
+          <select id="f-rating">
+            <option value="">— Rate after receipt —</option>
+            <option>5 – Excellent</option><option>4 – Good</option><option>3 – Average</option>
+            <option>2 – Below expectations</option><option>1 – Poor</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Internal notes</label>
+          <textarea id="f-notes" placeholder="Quality observations, MOQ negotiation notes, packaging feedback, comparison with existing supplier…" maxlength="500" oninput="document.getElementById('nc').textContent=this.value.length+'/500'"></textarea>
+          <div class="char-counter" id="nc">0/500</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="animation-delay:0.35s">
+      <div class="card-header">
+        <div class="card-icon blue"><i class="ti ti-paperclip"></i></div>
+        <div><div class="card-title">Attachments</div><div class="card-sub">Product images and documents</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Product images</label>
+          <div class="upload-zone" onclick="document.getElementById('img-input').click()">
+            <i class="ti ti-photo"></i>
+            <p>Click to attach product photos</p>
+            <span>JPG, PNG, WEBP · multiple allowed</span>
+            <input type="file" id="img-input" accept="image/*" multiple style="display:none" onchange="handleFiles(this,'img-list','image')">
+          </div>
+          <div class="file-list" id="img-list"></div>
+        </div>
+        <div class="form-group">
+          <label>Proforma invoice / docs</label>
+          <div class="upload-zone" onclick="document.getElementById('pi-input').click()">
+            <i class="ti ti-file-invoice"></i>
+            <p>Click to attach PI or documents</p>
+            <span>PDF, DOCX, XLSX · multiple allowed</span>
+            <input type="file" id="pi-input" accept=".pdf,.doc,.docx,.xlsx,.xls" multiple style="display:none" onchange="handleFiles(this,'pi-list','doc')">
+          </div>
+          <div class="file-list" id="pi-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="status-msg" class="status-msg"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="clearForm()"><i class="ti ti-refresh" style="font-size:13px"></i> Clear</button>
+      <button class="btn btn-primary" onclick="submitOrder()"><i class="ti ti-send" style="font-size:13px"></i> Save to Google Sheet</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="section">
+    <div class="metrics-grid" id="metrics">
+      <div class="metric-card"><div class="mlabel">Total orders</div><div class="mval">0</div><div class="msub">samples tracked</div></div>
+      <div class="metric-card"><div class="mlabel">Total spend</div><div class="mval">$0</div><div class="msub">samples + shipping</div></div>
+      <div class="metric-card"><div class="mlabel">Received</div><div class="mval">0</div><div class="msub">of 0 placed</div></div>
+      <div class="metric-card"><div class="mlabel">Approved</div><div class="mval">0</div><div class="msub">for bulk order</div></div>
+    </div>
+    <div class="sec-label">By team member</div>
+    <div class="member-grid" id="member-grid"></div>
+    <div class="sec-label" style="margin-top:0.5rem">By category</div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
+
+  <!-- ALL ORDERS -->
+  <div id="tab-orders" class="section">
+    <div class="filter-row">
+      <div class="search-wrap">
+        <i class="ti ti-search"></i>
+        <input type="text" id="search" placeholder="Search supplier, product, ID…" oninput="renderTable()">
+      </div>
+      <select id="fil-member" onchange="renderTable()" style="background:var(--navy2)">
+        <option value="">All members</option>
+        <option>Dhiraj</option><option>Dheeraj</option><option>Nitin</option><option>Akarsh</option>
+      </select>
+      <select id="fil-status" onchange="renderTable()" style="background:var(--navy2)">
+        <option value="">All statuses</option>
+        <option>Order placed</option><option>In transit</option><option>Received</option>
+        <option>Under review</option><option>Approved</option><option>Rejected</option>
+      </select>
+      <select id="fil-brand" onchange="renderTable()" style="background:var(--navy2)">
+        <option value="">All brands</option>
+        <option>Everyday Essentials</option><option>Small Appliances</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <div id="table-container">
+        <div class="empty-state"><i class="ti ti-inbox"></i><p>No orders yet. Log your first sample order!</p></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+const SHEET_ID='1RLfuv9bWV2sQM9SREQqjR-3mvYDN0ST5i4-2oGjcbVE';
+let orders=JSON.parse(localStorage.getItem('ch_sample_orders')||'[]');
+let uploadedFiles={images:[],docs:[]};
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const map={log:0,dashboard:1,orders:2};
+  document.querySelectorAll('.tab')[map[name]].classList.add('active');
+  if(name==='dashboard')renderDashboard();
+  if(name==='orders')renderTable();
+}
+
+function handleFiles(input,listId,type){
+  const key=type==='image'?'images':'docs';
+  uploadedFiles[key]=[...uploadedFiles[key],...Array.from(input.files)];
+  renderFileList(listId,key);
+}
+function renderFileList(listId,key){
+  document.getElementById(listId).innerHTML=uploadedFiles[key].map((f,i)=>
+    '<div class="file-item"><i class="ti ti-file" style="font-size:14px;color:var(--text3)"></i><span>'+f.name+'</span><button class="remove-file" onclick="removeFile(\''+key+'\','+i+',\''+listId+'\')"><i class="ti ti-x"></i></button></div>'
+  ).join('');
+}
+function removeFile(key,idx,listId){uploadedFiles[key].splice(idx,1);renderFileList(listId,key);}
+function getVal(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+
+function showStatus(msg,type){
+  const el=document.getElementById('status-msg');
+  el.innerHTML='<i class="ti ti-'+(type==='success'?'circle-check':'alert-circle')+'"></i> '+msg;
+  el.className='status-msg status-'+type;
+  setTimeout(()=>{el.className='status-msg';el.style.display='none';},6000);
+}
+
+async function submitOrder(){
+  const req=[{id:'f-date',name:'Order date'},{id:'f-member',name:'Team member'},{id:'f-supplier',name:'Supplier name'},{id:'f-channel',name:'Order channel'},{id:'f-product',name:'Product name'},{id:'f-amount',name:'Sample amount'},{id:'f-payment',name:'Payment mode'}];
+  for(const r of req){if(!getVal(r.id)){showStatus('Please fill in: '+r.name,'error');return;}}
+  const btn=document.querySelector('.btn-primary');
+  btn.innerHTML='<i class="ti ti-loader" style="font-size:13px"></i> Saving…';btn.disabled=true;
+  const row={
+    id:'SO-'+Date.now().toString().slice(-6),
+    loggedAt:new Date().toISOString().slice(0,10),
+    date:getVal('f-date'),member:getVal('f-member'),
+    supplier:getVal('f-supplier'),contact:getVal('f-contact'),
+    channel:getVal('f-channel'),booth:getVal('f-booth'),
+    country:getVal('f-country'),link:getVal('f-link'),
+    product:getVal('f-product'),category:getVal('f-category'),
+    brand:getVal('f-brand'),qty:getVal('f-qty')||'1',
+    sku:getVal('f-sku'),material:getVal('f-material'),moq:getVal('f-moq'),
+    currency:getVal('f-currency')||'USD',
+    amount:getVal('f-amount'),shipping:getVal('f-shipping')||'0',
+    total:(parseFloat(getVal('f-amount')||0)+parseFloat(getVal('f-shipping')||0)).toFixed(2),
+    payment:getVal('f-payment'),payStatus:getVal('f-paystatus'),piNo:getVal('f-pi'),
+    status:getVal('f-status')||'Order placed',eta:getVal('f-eta'),
+    tracking:getVal('f-tracking'),courier:getVal('f-courier'),
+    notes:getVal('f-notes'),intent:getVal('f-intent'),rating:getVal('f-rating'),
+    images:uploadedFiles.images.map(f=>f.name).join('; '),
+    docs:uploadedFiles.docs.map(f=>f.name).join('; ')
+  };
+  orders.push(row);
+  localStorage.setItem('ch_sample_orders',JSON.stringify(orders));
+  const ok=await pushToSheet(row);
+  btn.innerHTML='<i class="ti ti-send" style="font-size:13px"></i> Save to Google Sheet';btn.disabled=false;
+  showStatus(ok?'Order #'+row.id+' saved to Google Sheet!':'Saved locally. Sheet sync pending (auth required).','success');
+  clearForm();
+}
+
+async function pushToSheet(row){
+  const rowArr=[row.id,row.loggedAt,row.date,row.member,row.supplier,row.contact,row.channel,row.booth,row.country,row.link,row.product,row.category,row.brand,row.qty,row.sku,row.material,row.moq,row.currency,row.amount,row.shipping,row.total,row.payment,row.payStatus,row.piNo,row.status,row.eta,row.tracking,row.courier,row.notes,row.intent,row.rating,row.images,row.docs];
+  const headers=['Order ID','Logged Date','Order Date','Team Member','Supplier Name','Supplier Contact','Channel','Booth No.','Country','Alibaba Link','Product Description','Category','Target Brand','Qty','SKU / Model','Material','MOQ (Quoted)','Currency','Sample Amount','Shipping','Total Cost (USD)','Payment Mode','Payment Status','PI Number','Sample Status','Expected Delivery','Tracking No.','Courier','Internal Notes','Repurchase Intent','Quality Rating','Image Files','Documents'];
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:'Append one row to Google Sheet ID: '+SHEET_ID+'. If empty add headers: '+JSON.stringify(headers)+' Then append: '+JSON.stringify(rowArr)+' Use Google Drive MCP. Return only "success".'}],mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'gdrive'}]})});
+    const data=await res.json();
+    const text=data.content?.map(c=>c.text||'').join('').toLowerCase();
+    return text.includes('success')||text.includes('appended')||text.includes('added');
+  }catch(e){return false;}
+}
+
+function clearForm(){
+  ['f-date','f-member','f-supplier','f-contact','f-channel','f-booth','f-country','f-link','f-product','f-category','f-brand','f-qty','f-sku','f-material','f-moq','f-currency','f-amount','f-shipping','f-payment','f-paystatus','f-pi','f-status','f-eta','f-tracking','f-courier','f-notes','f-intent','f-rating'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('img-list').innerHTML='';
+  document.getElementById('pi-list').innerHTML='';
+  document.getElementById('nc').textContent='0/500';
+  uploadedFiles={images:[],docs:[]};
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+}
+
+function renderDashboard(){
+  const total=orders.length;
+  const spend=orders.reduce((s,o)=>s+parseFloat(o.total||0),0);
+  const received=orders.filter(o=>o.status==='Received').length;
+  const approved=orders.filter(o=>o.status==='Approved').length;
+  document.getElementById('metrics').innerHTML=
+    '<div class="metric-card"><div class="mlabel">Total orders</div><div class="mval">'+total+'</div><div class="msub">samples tracked</div></div>'+
+    '<div class="metric-card"><div class="mlabel">Total spend</div><div class="mval">$'+spend.toFixed(0)+'</div><div class="msub">samples + shipping</div></div>'+
+    '<div class="metric-card"><div class="mlabel">Received</div><div class="mval">'+received+'</div><div class="msub">of '+total+' placed</div></div>'+
+    '<div class="metric-card"><div class="mlabel">Approved</div><div class="mval">'+approved+'</div><div class="msub">for bulk order</div></div>';
+  const members=['Dhiraj','Dheeraj','Nitin','Akarsh'];
+  document.getElementById('member-grid').innerHTML=members.map(m=>{
+    const mo=orders.filter(o=>o.member===m);
+    const ms=mo.reduce((s,o)=>s+parseFloat(o.total||0),0);
+    const pct=total?Math.round(mo.length/total*100):0;
+    return '<div class="member-card"><div class="mname">'+m+'<span class="badge badge-transit">'+mo.length+' orders</span></div><div class="mspend">$'+ms.toFixed(0)+'</div><div class="mdetail">'+mo.filter(o=>o.status==='Approved').length+' approved · '+pct+'% of total</div></div>';
+  }).join('');
+  const cats={};
+  orders.forEach(o=>{if(o.category)cats[o.category]=(cats[o.category]||0)+1;});
+  document.getElementById('cat-grid').innerHTML=Object.entries(cats).length
+    ?Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,n])=>'<div class="cat-card"><div class="clabel">'+c+'</div><div class="cval">'+n+'</div></div>').join('')
+    :'<div style="color:var(--text3);font-size:13px;grid-column:1/-1">No data yet.</div>';
+}
+
+function renderTable(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const fm=document.getElementById('fil-member').value;
+  const fs=document.getElementById('fil-status').value;
+  const fb=document.getElementById('fil-brand').value;
+  const filtered=orders.filter(o=>{
+    const m=!q||[o.supplier,o.product,o.id,o.category].join(' ').toLowerCase().includes(q);
+    return m&&(!fm||o.member===fm)&&(!fs||o.status===fs)&&(!fb||o.brand===fb);
+  });
+  const c=document.getElementById('table-container');
+  if(!filtered.length){c.innerHTML='<div class="empty-state"><i class="ti ti-inbox"></i><p>No orders match your filters.</p></div>';return;}
+  const sc={'Received':'badge-received','Approved':'badge-approved','In transit':'badge-transit','Rejected':'badge-rejected'};
+  c.innerHTML='<table class="orders-table"><thead><tr><th style="width:80px">ID</th><th style="width:88px">Date</th><th style="width:85px">Member</th><th style="width:135px">Supplier</th><th>Product</th><th style="width:88px">Channel</th><th style="width:80px">Total</th><th style="width:105px">Payment</th><th style="width:108px">Status</th></tr></thead><tbody>'+
+    filtered.map(o=>'<tr><td style="font-size:11px;color:var(--text3);font-family:monospace">'+o.id+'</td><td style="color:var(--text2)">'+o.date+'</td><td style="font-weight:500">'+o.member+'</td><td title="'+o.supplier+'">'+o.supplier+'</td><td title="'+o.product+'" style="color:var(--text2)">'+o.product+'</td><td><span class="badge '+(o.channel==='Alibaba'?'badge-alibaba':'badge-email')+'">'+o.channel+'</span></td><td style="font-weight:600;color:var(--amber)">$'+parseFloat(o.total||0).toFixed(0)+'</td><td style="font-size:12px;color:var(--text2)">'+( o.payment||'—')+'</td><td><span class="badge '+(sc[o.status]||'badge-placed')+'">'+(o.status||'—')+'</span></td></tr>').join('')+
+    '</tbody></table>';
+}
+
+document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>
