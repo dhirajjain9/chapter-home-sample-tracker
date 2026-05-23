@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter Home – Sample Order Tracker</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f7f6f4; --bg3: #f0ede8;
+    --text: #1a1a1a; --text2: #6b6b6b; --text3: #9e9e9e;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --success-bg: #eaf3de; --success-text: #3b6d11;
+    --warning-bg: #faeeda; --warning-text: #854f0b;
+    --info-bg: #e6f1fb; --info-text: #185fa5;
+    --danger-bg: #fcebeb; --danger-text: #a32d2d;
+    --accent: #1a1a1a;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+  .app { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 20px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .header p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .sheet-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); padding: 7px 14px; border: 0.5px solid var(--border2); border-radius: var(--radius); text-decoration: none; transition: color 0.15s; }
+  .sheet-link:hover { color: var(--text); border-color: var(--text); }
+  .tab-bar { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+  .tab { padding: 9px 18px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+  .tab:hover:not(.active) { color: var(--text); }
+  .section { display: none; }
+  .section.active { display: block; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .required::after { content: ' *'; color: #e24b4a; }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    font-size: 14px; color: var(--text); background: var(--bg);
+    border: 0.5px solid var(--border2); border-radius: var(--radius);
+    padding: 8px 11px; width: 100%; font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--text); box-shadow: 0 0 0 2px rgba(0,0,0,0.06); }
+  textarea { resize: vertical; min-height: 76px; }
+  .section-divider { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); margin: 1.25rem 0 0.75rem; border-top: 0.5px solid var(--border); padding-top: 1rem; }
+  .upload-zone { border: 1px dashed var(--border2); border-radius: var(--radius); padding: 22px 16px; text-align: center; cursor: pointer; background: var(--bg2); transition: border-color 0.15s; }
+  .upload-zone:hover { border-color: var(--text); }
+  .upload-zone i { font-size: 26px; color: var(--text3); display: block; margin-bottom: 6px; }
+  .upload-zone p { font-size: 13px; color: var(--text2); }
+  .upload-zone span { font-size: 11px; color: var(--text3); }
+  .file-list { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .file-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); background: var(--bg2); padding: 5px 9px; border-radius: var(--radius); }
+  .remove-file { margin-left: auto; cursor: pointer; color: var(--text3); font-size: 12px; border: none; background: none; padding: 0 2px; }
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.5rem; }
+  .btn { padding: 9px 20px; font-size: 14px; font-weight: 500; border-radius: var(--radius); border: 0.5px solid var(--border2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-secondary { background: transparent; color: var(--text); }
+  .btn-secondary:hover { background: var(--bg2); }
+  .metric-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .metric { background: var(--bg2); border-radius: var(--radius); padding: 14px 16px; }
+  .metric .mlabel { font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+  .metric .mval { font-size: 24px; font-weight: 600; color: var(--text); }
+  .metric .msub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .table-wrap { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .orders-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  .orders-table th { text-align: left; padding: 9px 11px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text2); border-bottom: 0.5px solid var(--border); background: var(--bg2); }
+  .orders-table td { padding: 10px 11px; border-bottom: 0.5px solid var(--border); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .orders-table tr:last-child td { border-bottom: none; }
+  .orders-table tr:hover td { background: var(--bg2); }
+  .badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-alibaba { background: #fff3e0; color: #bf6a02; }
+  .badge-email { background: var(--info-bg); color: var(--info-text); }
+  .badge-placed { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-received { background: var(--success-bg); color: var(--success-text); }
+  .badge-approved { background: #eaf3de; color: #3b6d11; }
+  .badge-transit { background: var(--info-bg); color: var(--info-text); }
+  .badge-rejected { background: var(--danger-bg); color: var(--danger-text); }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
+  .filter-row input { max-width: 220px; }
+  .filter-row select { max-width: 160px; }
+  .status-msg { padding: 12px 16px; font-size: 13px; border-radius: var(--radius); margin-top: 1rem; display: none; }
+  .status-success { background: var(--success-bg); color: var(--success-text); display: block !important; }
+  .status-error { background: var(--danger-bg); color: var(--danger-text); display: block !important; }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text3); font-size: 14px; }
+  .empty-state i { font-size: 32px; display: block; margin-bottom: 10px; }
+  .member-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 8px; }
+  .cat-card { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; }
+  .cat-card .clabel { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .cat-card .cval { font-size: 20px; font-weight: 600; color: var(--text); }
+  .char-counter { font-size: 11px; color: var(--text3); text-align: right; }
+  @media (max-width: 600px) {
+    .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .metric-row { grid-template-columns: 1fr 1fr; }
+    .member-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1><i class="ti ti-clipboard-list"></i> Sample Order Tracker</h1>
+      <p>Chapter Home · Canton Fair 2026 · Supplier sample pipeline</p>
+    </div>
+    <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1RLfuv9bWV2sQM9SREQqjR-3mvYDN0ST5i4-2oGjcbVE/edit" target="_blank">
+      <i class="ti ti-external-link"></i> Open Google Sheet
+    </a>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('log')"><i class="ti ti-plus" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>Log order</button>
+    <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-chart-bar" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>Dashboard</button>
+    <button class="tab" onclick="switchTab('orders')"><i class="ti ti-list" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>All orders</button>
+  </div>
+
+  <!-- LOG ORDER -->
+  <div id="tab-log" class="section active">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="required">Order date</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="form-group">
+        <label class="required">Team member</label>
+        <select id="f-member">
+          <option value="">— Select —</option>
+          <option>Dhiraj</option>
+          <option>Dheeraj</option>
+          <option>Nitin</option>
+          <option>Akarsh</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-divider">Supplier details</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="required">Supplier name</label>
+        <input type="text" id="f-supplier" placeholder="e.g. Guangzhou Textile Co.">
+      </div>
+      <div class="form-group">
+        <label>Supplier contact person</label>
+        <input type="text" id="f-contact" placeholder="Name / WeChat / email">
+      </div>
+      <div class="form-group">
+        <label class="required">Order channel</label>
+        <select id="f-channel">
+          <option value="">— Select —</option>
+          <option>Alibaba</option>
+          <option>Email</option>
+          <option>WeChat</option>
+          <option>WhatsApp</option>
+          <option>Direct / In-person</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Canton Fair booth no.</label>
+        <input type="text" id="f-booth" placeholder="e.g. Hall 9.2 A12">
+      </div>
+      <div class="form-group">
+        <label>Supplier country</label>
+        <select id="f-country">
+          <option value="">— Select —</option>
+          <option>China</option>
+          <option>India</option>
+          <option>Vietnam</option>
+          <option>Bangladesh</option>
+          <option>Turkey</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Alibaba supplier link</label>
+        <input type="text" id="f-link" placeholder="https://…">
+      </div>
+    </div>
+
+    <div class="section-divider">Product details</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="required">Product name / description</label>
+        <input type="text" id="f-product" placeholder="e.g. Linen Cushion Cover 45×45cm, Embroidered">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="f-category">
+          <option value="">— Select —</option>
+          <option>Kitchenware</option>
+          <option>Home Storage &amp; Accessories</option>
+          <option>Home Appliances</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Target brand</label>
+        <select id="f-brand">
+          <option value="">— Select —</option>
+          <option>Everyday Essentials</option>
+          <option>Small Appliances</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Qty (no. of samples)</label>
+        <input type="number" id="f-qty" placeholder="e.g. 2" min="1">
+      </div>
+      <div class="form-group">
+        <label>SKU / Model no. (supplier)</label>
+        <input type="text" id="f-sku" placeholder="Supplier's internal code">
+      </div>
+      <div class="form-group">
+        <label>Material / composition</label>
+        <input type="text" id="f-material" placeholder="e.g. 100% linen, 300 TC">
+      </div>
+      <div class="form-group">
+        <label>MOQ (quoted by supplier)</label>
+        <input type="text" id="f-moq" placeholder="e.g. 500 pcs">
+      </div>
+    </div>
+
+    <div class="section-divider">Order financials</div>
+    <div class="form-grid three">
+      <div class="form-group">
+        <label class="required">Sample amount</label>
+        <input type="number" id="f-amount" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="form-group">
+        <label>Shipping cost</label>
+        <input type="number" id="f-shipping" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="form-group">
+        <label>Currency</label>
+        <select id="f-currency">
+          <option>USD</option>
+          <option>CNY</option>
+          <option>INR</option>
+          <option>EUR</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="required">Payment mode</label>
+        <select id="f-payment">
+          <option value="">— Select —</option>
+          <option>Alibaba Trade Assurance</option>
+          <option>PayPal</option>
+          <option>Bank transfer (SWIFT)</option>
+          <option>Alipay</option>
+          <option>WeChat Pay</option>
+          <option>Cash</option>
+          <option>Credit card</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Payment status</label>
+        <select id="f-paystatus">
+          <option value="">— Select —</option>
+          <option>Paid</option>
+          <option>Pending</option>
+          <option>Partial</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Proforma invoice no.</label>
+        <input type="text" id="f-pi" placeholder="PI-2026-001">
+      </div>
+    </div>
+
+    <div class="section-divider">Logistics &amp; tracking</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Sample status</label>
+        <select id="f-status">
+          <option value="">— Select —</option>
+          <option>Order placed</option>
+          <option>In transit</option>
+          <option>Received</option>
+          <option>Under review</option>
+          <option>Approved</option>
+          <option>Rejected</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Expected delivery date</label>
+        <input type="date" id="f-eta">
+      </div>
+      <div class="form-group">
+        <label>Tracking number</label>
+        <input type="text" id="f-tracking" placeholder="Courier tracking ID">
+      </div>
+      <div class="form-group">
+        <label>Courier</label>
+        <select id="f-courier">
+          <option value="">— Select —</option>
+          <option>DHL</option>
+          <option>FedEx</option>
+          <option>UPS</option>
+          <option>SF Express</option>
+          <option>EMS</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-divider">Evaluation &amp; notes</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Repurchase intent</label>
+        <select id="f-intent">
+          <option value="">— Not assessed yet —</option>
+          <option>High – likely bulk order</option>
+          <option>Medium – needs revision</option>
+          <option>Low – not pursuing</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quality rating (post-receipt)</label>
+        <select id="f-rating">
+          <option value="">— Rate after receipt —</option>
+          <option>5 – Excellent</option>
+          <option>4 – Good</option>
+          <option>3 – Average</option>
+          <option>2 – Below expectations</option>
+          <option>1 – Poor</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Internal notes</label>
+        <textarea id="f-notes" placeholder="Quality observations, follow-up required, MOQ negotiation notes, comparison with current supplier, packaging feedback…" maxlength="500" oninput="document.getElementById('nc').textContent=this.value.length+'/500'"></textarea>
+        <span class="char-counter" id="nc">0/500</span>
+      </div>
+    </div>
+
+    <div class="section-divider">Attachments</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Product images</label>
+        <div class="upload-zone" onclick="document.getElementById('img-input').click()">
+          <i class="ti ti-photo"></i>
+          <p>Click to attach product photos</p>
+          <span>JPG, PNG, WEBP · multiple allowed</span>
+          <input type="file" id="img-input" accept="image/*" multiple style="display:none" onchange="handleFiles(this,'img-list','image')">
+        </div>
+        <div class="file-list" id="img-list"></div>
+      </div>
+      <div class="form-group">
+        <label>Proforma invoice / documents</label>
+        <div class="upload-zone" onclick="document.getElementById('pi-input').click()">
+          <i class="ti ti-file-invoice"></i>
+          <p>Click to attach PI or docs</p>
+          <span>PDF, DOCX, XLSX · multiple allowed</span>
+          <input type="file" id="pi-input" accept=".pdf,.doc,.docx,.xlsx,.xls" multiple style="display:none" onchange="handleFiles(this,'pi-list','doc')">
+        </div>
+        <div class="file-list" id="pi-list"></div>
+      </div>
+    </div>
+
+    <div id="status-msg" class="status-msg"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="clearForm()">Clear form</button>
+      <button class="btn btn-primary" onclick="submitOrder()"><i class="ti ti-send" style="font-size:13px;vertical-align:-1px;margin-right:6px"></i>Save to Google Sheet</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="section">
+    <div class="metric-row" id="metrics">
+      <div class="metric"><div class="mlabel">Total orders</div><div class="mval">0</div><div class="msub">samples tracked</div></div>
+      <div class="metric"><div class="mlabel">Total spend</div><div class="mval">$0</div><div class="msub">samples + shipping</div></div>
+      <div class="metric"><div class="mlabel">Received</div><div class="mval">0</div><div class="msub">of 0 orders</div></div>
+      <div class="metric"><div class="mlabel">Approved</div><div class="mval">0</div><div class="msub">shortlisted for bulk</div></div>
+    </div>
+    <div class="section-divider" style="margin-top:0">By team member</div>
+    <div class="member-grid" id="member-grid"></div>
+    <div class="section-divider">By category</div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
+
+  <!-- ALL ORDERS -->
+  <div id="tab-orders" class="section">
+    <div class="filter-row">
+      <input type="text" id="search" placeholder="Search supplier, product, ID…" oninput="renderTable()">
+      <select id="fil-member" onchange="renderTable()">
+        <option value="">All members</option>
+        <option>Dhiraj</option>
+        <option>Dheeraj</option>
+        <option>Nitin</option>
+        <option>Akarsh</option>
+      </select>
+      <select id="fil-status" onchange="renderTable()">
+        <option value="">All statuses</option>
+        <option>Order placed</option>
+        <option>In transit</option>
+        <option>Received</option>
+        <option>Under review</option>
+        <option>Approved</option>
+        <option>Rejected</option>
+      </select>
+      <select id="fil-brand" onchange="renderTable()">
+        <option value="">All brands</option>
+        <option>Everyday Essentials</option>
+        <option>Small Appliances</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <div id="table-container">
+        <div class="empty-state"><i class="ti ti-inbox"></i>No orders yet. Log your first sample order!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = '1RLfuv9bWV2sQM9SREQqjR-3mvYDN0ST5i4-2oGjcbVE';
+let orders = JSON.parse(localStorage.getItem('ch_sample_orders') || '[]');
+let uploadedFiles = { images: [], docs: [] };
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const map = { log: 0, dashboard: 1, orders: 2 };
+  document.querySelectorAll('.tab')[map[name]].classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'orders') renderTable();
+}
+
+function handleFiles(input, listId, type) {
+  const files = Array.from(input.files);
+  const key = type === 'image' ? 'images' : 'docs';
+  uploadedFiles[key] = [...uploadedFiles[key], ...files];
+  renderFileList(listId, key);
+}
+
+function renderFileList(listId, key) {
+  const list = document.getElementById(listId);
+  list.innerHTML = uploadedFiles[key].map((f,i) => `
+    <div class="file-item">
+      <i class="ti ti-file" style="font-size:14px"></i>
+      <span>${f.name}</span>
+      <button class="remove-file" onclick="removeFile('${key}',${i},'${listId}')">✕</button>
+    </div>`).join('');
+}
+
+function removeFile(key, idx, listId) {
+  uploadedFiles[key].splice(idx,1);
+  renderFileList(listId, key);
+}
+
+function getVal(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function showStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = 'status-msg status-' + type;
+  setTimeout(() => { el.className = 'status-msg'; }, 6000);
+}
+
+async function submitOrder() {
+  const required = [
+    { id: 'f-date', name: 'Order date' }, { id: 'f-member', name: 'Team member' },
+    { id: 'f-supplier', name: 'Supplier name' }, { id: 'f-channel', name: 'Order channel' },
+    { id: 'f-product', name: 'Product name' }, { id: 'f-amount', name: 'Sample amount' },
+    { id: 'f-payment', name: 'Payment mode' }
+  ];
+  for (const r of required) {
+    if (!getVal(r.id)) { showStatus('Please fill in: ' + r.name, 'error'); return; }
+  }
+  const btn = document.querySelector('.btn-primary');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  const row = {
+    id: 'SO-' + Date.now().toString().slice(-6),
+    loggedAt: new Date().toISOString().slice(0,10),
+    date: getVal('f-date'), member: getVal('f-member'),
+    supplier: getVal('f-supplier'), contact: getVal('f-contact'),
+    channel: getVal('f-channel'), booth: getVal('f-booth'),
+    country: getVal('f-country'), link: getVal('f-link'),
+    product: getVal('f-product'), category: getVal('f-category'),
+    brand: getVal('f-brand'), qty: getVal('f-qty') || '1',
+    sku: getVal('f-sku'), material: getVal('f-material'), moq: getVal('f-moq'),
+    currency: getVal('f-currency') || 'USD',
+    amount: getVal('f-amount'), shipping: getVal('f-shipping') || '0',
+    total: (parseFloat(getVal('f-amount')||0)+parseFloat(getVal('f-shipping')||0)).toFixed(2),
+    payment: getVal('f-payment'), payStatus: getVal('f-paystatus'), piNo: getVal('f-pi'),
+    status: getVal('f-status') || 'Order placed', eta: getVal('f-eta'),
+    tracking: getVal('f-tracking'), courier: getVal('f-courier'),
+    notes: getVal('f-notes'), intent: getVal('f-intent'), rating: getVal('f-rating'),
+    images: uploadedFiles.images.map(f=>f.name).join('; '),
+    docs: uploadedFiles.docs.map(f=>f.name).join('; ')
+  };
+
+  orders.push(row);
+  localStorage.setItem('ch_sample_orders', JSON.stringify(orders));
+
+  const ok = await pushToSheet(row);
+  btn.textContent = 'Save to Google Sheet'; btn.disabled = false;
+  showStatus(ok ? '✓ Order #' + row.id + ' saved to Google Sheet!' : '✓ Saved locally. Sheet sync pending (auth required).', ok ? 'success' : 'success');
+  clearForm();
+}
+
+async function pushToSheet(row) {
+  const rowArr = [
+    row.id, row.loggedAt, row.date, row.member, row.supplier, row.contact,
+    row.channel, row.booth, row.country, row.link, row.product, row.category,
+    row.brand, row.qty, row.sku, row.material, row.moq,
+    row.currency, row.amount, row.shipping, row.total,
+    row.payment, row.payStatus, row.piNo,
+    row.status, row.eta, row.tracking, row.courier,
+    row.notes, row.intent, row.rating, row.images, row.docs
+  ];
+
+  const headers = [
+    'Order ID','Logged Date','Order Date','Team Member','Supplier Name','Supplier Contact',
+    'Channel','Booth No.','Country','Alibaba Link','Product Description','Category',
+    'Target Brand','Qty','SKU / Model','Material','MOQ (Quoted)',
+    'Currency','Sample Amount','Shipping','Total Cost (USD)',
+    'Payment Mode','Payment Status','PI Number',
+    'Sample Status','Expected Delivery','Tracking No.','Courier',
+    'Internal Notes','Repurchase Intent','Quality Rating','Image Files','Documents'
+  ];
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: `Append one row to Google Sheet ID: ${SHEET_ID}. 
+If the sheet is empty, first add these headers as row 1: ${JSON.stringify(headers)}
+Then append this data row: ${JSON.stringify(rowArr)}
+Use the Google Drive MCP tool to write to the spreadsheet. Return only "success" if done.`
+        }],
+        mcp_servers: [{ type: 'url', url: 'https://drivemcp.googleapis.com/mcp/v1', name: 'gdrive' }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.map(c=>c.text||'').join('').toLowerCase();
+    return text.includes('success') || text.includes('appended') || text.includes('added');
+  } catch(e) {
+    console.warn('Sheet sync error:', e);
+    return false;
+  }
+}
+
+function clearForm() {
+  ['f-date','f-member','f-supplier','f-contact','f-channel','f-booth','f-country','f-link',
+   'f-product','f-category','f-brand','f-qty','f-sku','f-material','f-moq',
+   'f-currency','f-amount','f-shipping','f-payment','f-paystatus','f-pi',
+   'f-status','f-eta','f-tracking','f-courier','f-notes','f-intent','f-rating'
+  ].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('img-list').innerHTML = '';
+  document.getElementById('pi-list').innerHTML = '';
+  document.getElementById('nc').textContent = '0/500';
+  uploadedFiles = { images:[], docs:[] };
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+}
+
+function renderDashboard() {
+  const total = orders.length;
+  const totalSpend = orders.reduce((s,o) => s+parseFloat(o.total||0),0);
+  const received = orders.filter(o=>o.status==='Received').length;
+  const approved = orders.filter(o=>o.status==='Approved').length;
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric"><div class="mlabel">Total orders</div><div class="mval">${total}</div><div class="msub">samples tracked</div></div>
+    <div class="metric"><div class="mlabel">Total spend (USD)</div><div class="mval">$${totalSpend.toFixed(0)}</div><div class="msub">samples + shipping</div></div>
+    <div class="metric"><div class="mlabel">Received</div><div class="mval">${received}</div><div class="msub">of ${total} placed</div></div>
+    <div class="metric"><div class="mlabel">Approved</div><div class="mval">${approved}</div><div class="msub">shortlisted for bulk</div></div>
+  `;
+  const members = ['Dhiraj','Dheeraj','Nitin','Akarsh'];
+  document.getElementById('member-grid').innerHTML = members.map(m => {
+    const mo = orders.filter(o=>o.member===m);
+    const ms = mo.reduce((s,o)=>s+parseFloat(o.total||0),0);
+    return `<div class="metric">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:600">${m}</span>
+        <span class="badge badge-transit">${mo.length} orders</span>
+      </div>
+      <div class="mval" style="font-size:20px">$${ms.toFixed(0)}</div>
+      <div class="msub">${mo.filter(o=>o.status==='Approved').length} approved</div>
+    </div>`;
+  }).join('');
+  const cats = {};
+  orders.forEach(o=>{if(o.category)cats[o.category]=(cats[o.category]||0)+1;});
+  document.getElementById('cat-grid').innerHTML = Object.entries(cats).length
+    ? Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`
+        <div class="cat-card"><div class="clabel">${c}</div><div class="cval">${n}</div></div>
+      `).join('')
+    : '<div style="color:var(--text3);font-size:13px;grid-column:1/-1">No data yet.</div>';
+}
+
+function renderTable() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const fm = document.getElementById('fil-member').value;
+  const fs = document.getElementById('fil-status').value;
+  const fb = document.getElementById('fil-brand').value;
+  let filtered = orders.filter(o => {
+    const m = !q || [o.supplier,o.product,o.id,o.category].join(' ').toLowerCase().includes(q);
+    return m && (!fm||o.member===fm) && (!fs||o.status===fs) && (!fb||o.brand===fb);
+  });
+  const c = document.getElementById('table-container');
+  if (!filtered.length) {
+    c.innerHTML = '<div class="empty-state"><i class="ti ti-inbox"></i>No orders match your filters.</div>';
+    return;
+  }
+  const statusBadge = s => {
+    const map = {'Received':'badge-received','Approved':'badge-approved','In transit':'badge-transit','Rejected':'badge-rejected'};
+    return `<span class="badge ${map[s]||'badge-placed'}">${s||'—'}</span>`;
+  };
+  c.innerHTML = `<table class="orders-table">
+    <thead><tr>
+      <th style="width:80px">Order ID</th>
+      <th style="width:90px">Date</th>
+      <th style="width:90px">Member</th>
+      <th style="width:140px">Supplier</th>
+      <th>Product</th>
+      <th style="width:90px">Channel</th>
+      <th style="width:85px">Total</th>
+      <th style="width:110px">Payment</th>
+      <th style="width:110px">Status</th>
+    </tr></thead>
+    <tbody>${filtered.map(o=>`
+      <tr>
+        <td style="font-size:11px;color:var(--text3)">${o.id}</td>
+        <td>${o.date}</td>
+        <td>${o.member}</td>
+        <td title="${o.supplier}">${o.supplier}</td>
+        <td title="${o.product}" style="font-size:12px">${o.product}</td>
+        <td><span class="badge ${o.channel==='Alibaba'?'badge-alibaba':'badge-email'}">${o.channel}</span></td>
+        <td style="font-weight:600">$${parseFloat(o.total||0).toFixed(0)}</td>
+        <td style="font-size:12px">${o.payment||'—'}</td>
+        <td>${statusBadge(o.status)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>
