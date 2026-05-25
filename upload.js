@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { fileName, mimeType, base64Data } = req.body;
+    const { type, fileName, mimeType, base64Data } = req.body;
     if (!fileName || !base64Data) return res.status(400).json({ error: 'Missing fileName or base64Data' });
 
     const scriptUrl = 'https://script.google.com/macros/s/AKfycbwH0YmTWjyQdgiCEFnEtQvEPNPqSS9uRTV0WZxoHg_O7R4iuueit-23CXXBzmEjavkf/exec';
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       method: 'POST',
       redirect: 'follow',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ type: 'upload', fileName, mimeType, base64Data })
+      body: JSON.stringify({ type: type || 'upload', fileName, mimeType, base64Data })
     });
 
     const text = await response.text();
