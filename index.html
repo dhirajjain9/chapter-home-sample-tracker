@@ -521,7 +521,7 @@ async function syncFromSheet() {
   const indicator = document.getElementById('sync-indicator');
   if (indicator) indicator.style.display = 'inline-flex';
   try {
-    const res = await fetch(SCRIPT_URL + '?action=getData', { method: 'GET', redirect: 'follow' });
+    const res = await fetch('/api/sync', { method: 'GET' });
     const data = await res.json();
     if (!Array.isArray(data)) return;
     orders = data.map(row => ({
@@ -574,7 +574,7 @@ async function switchTab(name) {
   const map = { log: 0, dashboard: 1, orders: 2, gallery: 3 };
   document.querySelectorAll('.tab')[map[name]].classList.add('active');
   if (name !== 'log') {
-    await syncFromSheet();
+    try { await syncFromSheet(); } catch(e) { console.error('Sync failed:', e); }
   }
   if (name === 'dashboard') renderDashboard();
   if (name === 'orders') renderTable();
