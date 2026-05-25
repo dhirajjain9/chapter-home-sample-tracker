@@ -1,1 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter Home — Sample Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#f8f7f4;--navy2:#ffffff;--navy3:#f2f1ee;--navy4:#e8e6e1;
+  --amber:#b8600a;--amber2:#9a4f08;
+  --amber-dim:rgba(184,96,10,0.08);--amber-dim2:rgba(184,96,10,0.04);
+  --text:#1a1916;--text2:#5a5754;--text3:#9a9794;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --success-text:#1a6b3a;--warning-text:#8a5c00;--info-text:#1a4fa8;--danger-text:#c0392b;
+  --radius:10px;--radius-lg:14px;--radius-xl:18px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:#f2f1ee;color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+.app{max-width:1000px;margin:0 auto;padding:0 1.5rem 4rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 0 2rem;border-bottom:1px solid var(--border);margin-bottom:2rem;flex-wrap:wrap;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:40px;height:40px;background:var(--amber-dim);border:1px solid rgba(232,168,76,0.3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--amber)}
+.brand-text h1{font-family:'DM Serif Display',serif;font-size:18px;font-weight:400;color:var(--text)}
+.brand-text p{font-size:11px;color:var(--text3);letter-spacing:0.05em;text-transform:uppercase;margin-top:1px}
+.sheet-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:7px 14px;border:1px solid var(--border2);border-radius:8px;text-decoration:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;background:var(--navy2)}
+.sheet-btn:hover{color:var(--amber);border-color:rgba(232,168,76,0.4);background:var(--amber-dim)}
+.tab-row{display:flex;gap:4px;margin-bottom:2rem;background:var(--navy2);padding:4px;border-radius:12px;border:1px solid var(--border)}
+.tab{flex:1;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text2);border-radius:9px;transition:all 0.2s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px}
+.tab.active{background:var(--navy4);color:var(--amber);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.tab:hover:not(.active){color:var(--text);background:var(--navy3)}
+.section{display:none}.section.active{display:block}
+.card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1rem;animation:fadeUp 0.3s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem}
+.card-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.card-icon.amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(232,168,76,0.2)}
+.card-icon.blue{background:rgba(116,185,255,0.1);color:#74b9ff;border:1px solid rgba(116,185,255,0.2)}
+.card-icon.green{background:rgba(116,198,157,0.1);color:#74c69d;border:1px solid rgba(116,198,157,0.2)}
+.card-icon.purple{background:rgba(162,155,254,0.1);color:#a29bfe;border:1px solid rgba(162,155,254,0.2)}
+.card-title{font-size:13px;font-weight:600;color:var(--text);letter-spacing:0.02em}
+.card-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.06em}
+.required::after{content:' *';color:var(--amber)}
+input[type=text],input[type=number],input[type=date],select,textarea{font-size:13px;color:var(--text);background:var(--navy3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;width:100%;font-family:'DM Sans',sans-serif;transition:all 0.2s;appearance:none;-webkit-appearance:none}
+input::placeholder,textarea::placeholder{color:var(--text3)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(232,168,76,0.5);background:var(--navy4);box-shadow:0 0 0 3px rgba(232,168,76,0.08)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5754' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+.upload-zone{border:1px dashed var(--border2);border-radius:10px;padding:24px 16px;text-align:center;cursor:pointer;background:var(--navy3);transition:all 0.2s}
+.upload-zone:hover{border-color:rgba(232,168,76,0.4);background:var(--amber-dim2)}
+.upload-zone i{font-size:28px;color:var(--text3);display:block;margin-bottom:8px;transition:color 0.2s}
+.upload-zone:hover i{color:var(--amber)}
+.upload-zone p{font-size:13px;color:var(--text2);font-weight:500}
+.upload-zone span{font-size:11px;color:var(--text3);margin-top:3px;display:block}
+.file-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.file-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);background:var(--navy4);padding:6px 10px;border-radius:8px;border:1px solid var(--border)}
+.remove-file{margin-left:auto;cursor:pointer;color:var(--text3);font-size:13px;border:none;background:none;padding:0 2px;transition:color 0.2s}
+.remove-file:hover{color:var(--danger-text)}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:1.5rem}
+.btn{padding:10px 22px;font-size:13px;font-weight:600;border-radius:9px;border:1px solid var(--border2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--amber);color:#fff;border-color:var(--amber)}
+.btn-primary:hover{background:var(--amber2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,96,10,0.25)}
+.btn-primary:disabled{opacity:0.6;transform:none;cursor:not-allowed}
+.btn-secondary{background:var(--navy3);color:var(--text2);border-color:var(--border2)}
+.btn-secondary:hover{background:var(--navy4);color:var(--text)}
+.status-msg{padding:12px 16px;font-size:13px;border-radius:9px;margin-top:1rem;display:none;font-weight:500}
+.status-success{background:rgba(26,107,58,0.08);color:#1a6b3a;border:1px solid rgba(26,107,58,0.2);display:flex!important;align-items:center;gap:8px}
+.status-error{background:rgba(192,57,43,0.08);color:#c0392b;border:1px solid rgba(192,57,43,0.2);display:flex!important;align-items:center;gap:8px}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.metric-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;position:relative;overflow:hidden;animation:fadeUp 0.3s ease both}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--amber);opacity:0.25;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.metric-card .mlabel{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:8px}
+.metric-card .mval{font-family:'DM Serif Display',serif;font-size:32px;color:var(--amber);line-height:1}
+.metric-card .msub{font-size:11px;color:var(--text3);margin-top:6px}
+.member-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+.member-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;animation:fadeUp 0.3s ease both}
+.member-card .mname{font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.member-card .mspend{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);margin-bottom:4px}
+.member-card .mdetail{font-size:11px;color:var(--text3)}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cat-card{background:var(--navy2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;animation:fadeUp 0.3s ease both}
+.cat-card .clabel{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:6px}
+.cat-card .cval{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text)}
+.filter-row{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
+.search-wrap{position:relative;flex:1;max-width:280px}
+.search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none}
+.search-wrap input{padding-left:34px;background:var(--navy2)}
+.filter-row select{max-width:170px;background:var(--navy2)}
+.table-wrap{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.orders-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.orders-table th{text-align:left;padding:11px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);border-bottom:1px solid var(--border);background:var(--navy3)}
+.orders-table td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background 0.15s}
+.orders-table tr:last-child td{border-bottom:none}
+.orders-table tbody tr:hover td{background:var(--navy3)}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-alibaba{background:rgba(184,96,10,0.1);color:#8a4a08;border:1px solid rgba(184,96,10,0.2)}
+.badge-email{background:rgba(26,79,168,0.08);color:#1a4fa8;border:1px solid rgba(26,79,168,0.2)}
+.badge-placed{background:rgba(138,92,0,0.1);color:#7a5200;border:1px solid rgba(138,92,0,0.2)}
+.badge-received{background:rgba(26,107,58,0.1);color:#1a6b3a;border:1px solid rgba(26,107,58,0.2)}
+.badge-approved{background:rgba(0,120,100,0.1);color:#007864;border:1px solid rgba(0,120,100,0.2)}
+.badge-transit{background:rgba(26,79,168,0.08);color:#1a4fa8;border:1px solid rgba(26,79,168,0.15)}
+.badge-rejected{background:rgba(192,57,43,0.08);color:#c0392b;border:1px solid rgba(192,57,43,0.2)}
+.edit-btn{background:var(--navy3);border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:13px;font-family:inherit;transition:all 0.15s}
+.edit-btn:hover{color:var(--amber);border-color:rgba(232,168,76,0.4);background:var(--navy4)}
+.sec-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin:0.25rem 0 1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+.empty-state{text-align:center;padding:3.5rem 1rem;color:var(--text3)}
+.empty-state i{font-size:36px;display:block;margin-bottom:12px;opacity:0.4}
+.empty-state p{font-size:14px}
+.char-counter{font-size:11px;color:var(--text3);text-align:right;margin-top:2px}
+/* SKU */
+.sku-row{display:grid;grid-template-columns:1fr 2fr 0.8fr 0.8fr 1fr 1fr auto;gap:10px;align-items:end;background:var(--navy3);border:1px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:8px}
+.sku-row .form-group{margin:0}
+.sku-remove{background:none;border:none;color:var(--text3);cursor:pointer;padding:6px;border-radius:6px;transition:color 0.15s;align-self:flex-end}
+.sku-remove:hover{color:var(--danger-text)}
+/* GALLERY */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.gallery-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:all 0.2s;animation:fadeUp 0.3s ease both}
+.gallery-card:hover{border-color:rgba(232,168,76,0.4);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.gallery-img-placeholder{width:100%;height:160px;background:var(--navy3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text3)}
+.gallery-info{padding:12px 14px}
+.gallery-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.gallery-meta{font-size:11px;color:var(--text3);display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.gallery-price{font-size:13px;font-weight:600;color:var(--amber);margin-top:4px}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:1000;align-items:center;justify-content:center;padding:1.5rem;backdrop-filter:blur(3px)}
+.modal-box{background:var(--navy2);border:1px solid var(--border2);border-radius:var(--radius-xl);width:100%;max-width:680px;max-height:90vh;overflow-y:auto;position:relative;animation:fadeUp 0.2s ease}
+.modal-close{position:absolute;top:14px;right:14px;background:var(--navy3);border:1px solid var(--border2);color:var(--text2);width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.15s;z-index:2}
+.modal-close:hover{color:var(--text);background:var(--navy4)}
+.modal-img-placeholder{width:100%;height:220px;background:var(--navy3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text3);border-radius:var(--radius-xl) var(--radius-xl) 0 0}
+.modal-body{padding:1.5rem}
+.modal-product-name{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);line-height:1.3;margin-bottom:4px}
+.modal-supplier-name{font-size:13px;color:var(--text2);margin-bottom:1rem}
+.modal-sections{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-section{background:var(--navy3);border-radius:var(--radius);padding:12px 14px}
+.modal-section-full{grid-column:1/-1}
+.modal-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.modal-fields{display:flex;flex-direction:column;gap:7px}
+.modal-field .fl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:2px}
+.modal-field .fv{font-size:13px;color:var(--text)}
+.modal-notes{font-size:13px;color:var(--text2);line-height:1.6}
+@media(max-width:640px){
+  .form-grid,.form-grid.three{grid-template-columns:1fr}
+  .form-group.full{grid-column:1}
+  .metrics-grid{grid-template-columns:1fr 1fr}
+  .member-grid{grid-template-columns:1fr}
+  .tab-row{flex-direction:column}
+  .sku-row{grid-template-columns:1fr 1fr}
+  .sku-row .form-group:nth-child(1),.sku-row .form-group:nth-child(2){grid-column:1/-1}
+  .modal-sections{grid-template-columns:1fr}
+  .modal-section-full{grid-column:1}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon"><i class="ti ti-clipboard-list"></i></div>
+      <div class="brand-text">
+        <h1>Sample Order Tracker</h1>
+        <p>Chapter Home · Supplier sample pipeline</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="sync-indicator" style="font-size:11px;color:var(--text3);display:none"><i class="ti ti-loader" style="font-size:12px"></i> Syncing…</span>
+      <a class="sheet-btn" href="https://docs.google.com/spreadsheets/d/1RLfuv9bWV2sQM9SREQqjR-3mvYDN0ST5i4-2oGjcbVE/edit" target="_blank">
+        <i class="ti ti-table" style="font-size:13px"></i> Google Sheet
+      </a>
+    </div>
+  </div>
 
+  <div class="tab-row">
+    <button class="tab active" onclick="switchTab('log')"><i class="ti ti-plus" style="font-size:14px"></i> Log order</button>
+    <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-layout-dashboard" style="font-size:14px"></i> Dashboard</button>
+    <button class="tab" onclick="switchTab('orders')"><i class="ti ti-list-details" style="font-size:14px"></i> All orders</button>
+    <button class="tab" onclick="switchTab('gallery')"><i class="ti ti-layout-grid" style="font-size:14px"></i> Product gallery</button>
+  </div>
+
+  <!-- LOG ORDER -->
+  <div id="tab-log" class="section active">
+
+    <!-- PI AUTO-FETCH -->
+    <div class="card" style="animation-delay:0.02s;border-color:rgba(232,168,76,0.3)">
+      <div class="card-header">
+        <div class="card-icon amber"><i class="ti ti-file-invoice"></i></div>
+        <div><div class="card-title">Auto-fill from Proforma Invoice</div><div class="card-sub">Upload a PI and Claude extracts all details automatically · PDF, Excel, Image</div></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+        <div class="upload-zone" style="flex:1;min-width:200px" onclick="document.getElementById('pi-autofetch-input').click()">
+          <i class="ti ti-file-upload" id="pi-fetch-icon"></i>
+          <p id="pi-fetch-label">Click to upload Proforma Invoice</p>
+          <span>PDF, Excel (.xlsx / .xls), CSV, or image</span>
+          <input type="file" id="pi-autofetch-input" accept=".pdf,.xlsx,.xls,.csv,image/*" style="display:none" onchange="handlePIUpload(this)">
+        </div>
+        <button class="btn btn-primary" id="pi-fetch-btn" onclick="fetchFromPI()" style="align-self:center;white-space:nowrap" disabled>
+          <i class="ti ti-sparkles" style="font-size:13px"></i> Extract details
+        </button>
+      </div>
+      <div id="pi-fetch-status" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;align-items:center;gap:8px"></div>
+    </div>
+
+    <!-- ORDER DETAILS -->
+    <div class="card" style="animation-delay:0.05s">
+      <div class="card-header">
+        <div class="card-icon amber"><i class="ti ti-user"></i></div>
+        <div><div class="card-title">Order details</div><div class="card-sub">Who is placing this order and when</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="required">Order date</label><input type="date" id="f-date"></div>
+        <div class="form-group"><label class="required">Team member</label>
+          <select id="f-member">
+            <option value="">— Select member —</option>
+            <option>Dhiraj</option><option>Dheeraj</option><option>Nitin</option><option>Akarsh</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPPLIER -->
+    <div class="card" style="animation-delay:0.08s">
+      <div class="card-header">
+        <div class="card-icon blue"><i class="ti ti-building-factory"></i></div>
+        <div><div class="card-title">Supplier details</div><div class="card-sub">Who are you ordering from</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="required">Supplier name</label><input type="text" id="f-supplier" placeholder="e.g. Zhejiang Erhui Technology Co."></div>
+        <div class="form-group"><label>Contact person</label><input type="text" id="f-contact" placeholder="Name / WeChat / email"></div>
+        <div class="form-group"><label class="required">Order channel</label>
+          <select id="f-channel">
+            <option value="">— Select channel —</option>
+            <option>Alibaba</option><option>Email</option><option>WeChat</option><option>WhatsApp</option><option>Direct / In-person</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Alibaba store link</label><input type="text" id="f-link" placeholder="https://…"></div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS / SKUs -->
+    <div class="card" style="animation-delay:0.11s">
+      <div class="card-header">
+        <div class="card-icon green"><i class="ti ti-package"></i></div>
+        <div><div class="card-title">Products / SKUs</div><div class="card-sub">Add one or multiple items from this supplier — each becomes a separate row</div></div>
+      </div>
+      <div id="sku-list"></div>
+      <button type="button" onclick="addSKU()" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(232,168,76,0.25);border-radius:8px;padding:7px 14px;cursor:pointer;font-family:inherit;margin-top:4px">
+        <i class="ti ti-plus" style="font-size:13px"></i> Add another SKU
+      </button>
+      <div style="height:1px;background:var(--border);margin:1.25rem 0"></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Target brand</label>
+          <select id="f-brand"><option value="">— Select —</option><option>Everyday Essentials</option><option>Small Appliances</option></select>
+        </div>
+        <div class="form-group"><label>Material / composition</label><input type="text" id="f-material" placeholder="e.g. ABS + PP"></div>
+        <div class="form-group"><label>MOQ (quoted by supplier)</label><input type="text" id="f-moq" placeholder="e.g. 500 pcs"></div>
+      </div>
+    </div>
+
+    <!-- FINANCIALS -->
+    <div class="card" style="animation-delay:0.14s">
+      <div class="card-header">
+        <div class="card-icon amber"><i class="ti ti-coins"></i></div>
+        <div><div class="card-title">Financials</div><div class="card-sub">Payment and cost details for this order</div></div>
+      </div>
+      <div class="form-grid three">
+        <div class="form-group"><label>Shipping cost</label><input type="number" id="f-shipping" placeholder="0.00" step="0.01" min="0" oninput="updatePITotal()"></div>
+        <div class="form-group"><label>Currency</label>
+          <select id="f-currency"><option>CNY</option><option>USD</option><option>INR</option><option>EUR</option></select>
+        </div>
+        <div class="form-group"><label class="required">Payment mode</label>
+          <select id="f-payment">
+            <option value="">— Select —</option>
+            <option>Alibaba Trade Assurance</option><option>PayPal</option><option>Bank transfer (SWIFT)</option>
+            <option>Alipay</option><option>WeChat Pay</option><option>Cash</option><option>Credit card</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Payment status</label>
+          <select id="f-paystatus"><option value="">— Select —</option><option>Paid</option><option>Pending</option><option>Partial</option></select>
+        </div>
+        <div class="form-group"><label>Proforma invoice no.</label><input type="text" id="f-pi" placeholder="PI-2026-001"></div>
+      </div>
+      <div style="margin-top:12px;background:var(--navy3);border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Total PI value (SKUs + shipping)</span>
+        <span id="pi-total-display" style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--amber)">¥0.00</span>
+      </div>
+    </div>
+
+    <!-- LOGISTICS -->
+    <div class="card" style="animation-delay:0.17s">
+      <div class="card-header">
+        <div class="card-icon purple"><i class="ti ti-truck"></i></div>
+        <div><div class="card-title">Logistics &amp; tracking</div><div class="card-sub">Can be filled in later via the Edit button in All orders</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Sample status</label>
+          <select id="f-status">
+            <option value="">— Select —</option>
+            <option>Order placed</option><option>In transit</option><option>Received</option>
+            <option>Under review</option><option>Approved</option><option>Rejected</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Expected delivery</label><input type="date" id="f-eta"></div>
+        <div class="form-group full"><label>Tracking number</label><input type="text" id="f-tracking" placeholder="Courier tracking ID"></div>
+      </div>
+    </div>
+
+    <!-- EVALUATION -->
+    <div class="card" style="animation-delay:0.2s">
+      <div class="card-header">
+        <div class="card-icon green"><i class="ti ti-star"></i></div>
+        <div><div class="card-title">Evaluation &amp; notes</div><div class="card-sub">Quality assessment — can be updated after receipt</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Repurchase intent</label>
+          <select id="f-intent">
+            <option value="">— Not assessed yet —</option>
+            <option>High – likely bulk order</option><option>Medium – needs revision</option><option>Low – not pursuing</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Quality rating</label>
+          <select id="f-rating">
+            <option value="">— Rate after receipt —</option>
+            <option>5 – Excellent</option><option>4 – Good</option><option>3 – Average</option>
+            <option>2 – Below expectations</option><option>1 – Poor</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Internal notes</label>
+          <textarea id="f-notes" placeholder="Quality observations, MOQ negotiation, packaging feedback…" maxlength="500" oninput="document.getElementById('nc').textContent=this.value.length+'/500'"></textarea>
+          <div class="char-counter" id="nc">0/500</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATTACHMENTS -->
+    <div class="card" style="animation-delay:0.23s">
+      <div class="card-header">
+        <div class="card-icon blue"><i class="ti ti-paperclip"></i></div>
+        <div><div class="card-title">Attachments</div><div class="card-sub">Product images and supporting documents</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Product images</label>
+          <div class="upload-zone" onclick="document.getElementById('img-input').click()">
+            <i class="ti ti-photo" id="img-upload-icon"></i>
+            <p id="img-upload-label">Click to attach product photos</p>
+            <span>JPG, PNG, WEBP · uploads to Google Drive automatically</span>
+            <input type="file" id="img-input" accept="image/*" multiple style="display:none" onchange="handleImageUpload(this)">
+          </div>
+          <div class="file-list" id="img-list"></div>
+        </div>
+        <div class="form-group">
+          <label>PI / Documents</label>
+          <div class="upload-zone" onclick="document.getElementById('pi-input').click()">
+            <i class="ti ti-file-invoice" id="pi-upload-icon"></i>
+            <p id="pi-upload-label">Click to attach PI or documents</p>
+            <span>PDF, DOCX, XLSX · uploads to Google Drive automatically</span>
+            <input type="file" id="pi-input" accept=".pdf,.doc,.docx,.xlsx,.xls" multiple style="display:none" onchange="handlePIDocUpload(this)">
+          </div>
+          <div class="file-list" id="pi-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="status-msg" class="status-msg"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="clearForm()"><i class="ti ti-refresh" style="font-size:13px"></i> Clear</button>
+      <button class="btn btn-primary" id="save-btn" onclick="submitOrder()"><i class="ti ti-send" style="font-size:13px"></i> Save to Google Sheet</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="section">
+    <div class="metrics-grid" id="metrics">
+      <div class="metric-card"><div class="mlabel">Total PIs</div><div class="mval">0</div><div class="msub">proforma invoices</div></div>
+      <div class="metric-card"><div class="mlabel">Total spend</div><div class="mval">¥0</div><div class="msub">samples + shipping</div></div>
+      <div class="metric-card"><div class="mlabel">Products</div><div class="mval">0</div><div class="msub">distinct product names</div></div>
+      <div class="metric-card"><div class="mlabel">Total SKUs</div><div class="mval">0</div><div class="msub">line items ordered</div></div>
+    </div>
+    <div class="sec-label">By team member</div>
+    <div class="member-grid" id="member-grid"></div>
+    <div class="sec-label">By brand</div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
+
+  <!-- ALL ORDERS -->
+  <div id="tab-orders" class="section">
+    <div class="filter-row">
+      <div class="search-wrap"><i class="ti ti-search"></i><input type="text" id="search" placeholder="Search supplier, product, ID…" oninput="renderTable()"></div>
+      <select id="fil-member" onchange="renderTable()" style="background:var(--navy2)">
+        <option value="">All members</option><option>Dhiraj</option><option>Dheeraj</option><option>Nitin</option><option>Akarsh</option>
+      </select>
+      <select id="fil-status" onchange="renderTable()" style="background:var(--navy2)">
+        <option value="">All statuses</option>
+        <option>Order placed</option><option>In transit</option><option>Received</option><option>Under review</option><option>Approved</option><option>Rejected</option>
+      </select>
+      <select id="fil-brand" onchange="renderTable()" style="background:var(--navy2)">
+        <option value="">All brands</option><option>Everyday Essentials</option><option>Small Appliances</option>
+      </select>
+    </div>
+    <div class="table-wrap"><div id="table-container"><div class="empty-state"><i class="ti ti-inbox"></i><p>No orders yet.</p></div></div></div>
+  </div>
+
+  <!-- GALLERY -->
+  <div id="tab-gallery" class="section">
+    <div class="filter-row">
+      <div class="search-wrap"><i class="ti ti-search"></i><input type="text" id="gallery-search" placeholder="Search product, supplier…" oninput="renderGallery()"></div>
+      <select id="gallery-brand" onchange="renderGallery()" style="background:var(--navy2)">
+        <option value="">All brands</option><option>Everyday Essentials</option><option>Small Appliances</option>
+      </select>
+    </div>
+    <div id="gallery-grid" class="gallery-grid"></div>
+  </div>
+
+  <!-- PRODUCT MODAL -->
+  <div id="product-modal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-box">
+      <button class="modal-close" onclick="document.getElementById('product-modal').style.display='none'"><i class="ti ti-x"></i></button>
+      <div id="modal-img-wrap"><div class="modal-img-placeholder"><i class="ti ti-photo-off" style="font-size:36px"></i><span>No image attached</span></div></div>
+      <div class="modal-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:1.25rem">
+          <div style="flex:1;min-width:0">
+            <div class="modal-product-name" id="modal-product"></div>
+            <div class="modal-supplier-name" id="modal-supplier"></div>
+          </div>
+          <span id="modal-status-badge"></span>
+        </div>
+        <div class="modal-sections">
+          <div class="modal-section"><div class="modal-section-title"><i class="ti ti-building-factory"></i> Supplier</div><div class="modal-fields" id="modal-supplier-fields"></div></div>
+          <div class="modal-section modal-section-full"><div class="modal-section-title"><i class="ti ti-package"></i> SKUs ordered</div><div class="modal-fields" id="modal-product-fields"></div></div>
+          <div class="modal-section"><div class="modal-section-title"><i class="ti ti-coins"></i> Financials</div><div class="modal-fields" id="modal-financial-fields"></div></div>
+          <div class="modal-section"><div class="modal-section-title"><i class="ti ti-truck"></i> Logistics</div><div class="modal-fields" id="modal-logistics-fields"></div></div>
+          <div class="modal-section modal-section-full" id="modal-notes-section" style="display:none"><div class="modal-section-title"><i class="ti ti-notes"></i> Notes</div><div class="modal-notes" id="modal-notes"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div id="edit-modal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-box" style="max-width:540px">
+      <button class="modal-close" onclick="document.getElementById('edit-modal').style.display='none'"><i class="ti ti-x"></i></button>
+      <div class="modal-body" style="padding-top:1.75rem">
+        <div style="margin-bottom:1.25rem">
+          <div class="modal-product-name" id="edit-modal-title"></div>
+          <div class="modal-supplier-name" id="edit-modal-sub"></div>
+        </div>
+        <div style="background:var(--navy3);border-radius:var(--radius);padding:14px;margin-bottom:1rem">
+          <div class="modal-section-title" style="margin-bottom:12px"><i class="ti ti-truck"></i> Logistics</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Sample status</label>
+              <select id="edit-status"><option value="">— Select —</option><option>Order placed</option><option>In transit</option><option>Received</option><option>Under review</option><option>Approved</option><option>Rejected</option></select>
+            </div>
+            <div class="form-group"><label>Expected delivery</label><input type="date" id="edit-eta"></div>
+            <div class="form-group full"><label>Tracking number</label><input type="text" id="edit-tracking" placeholder="Courier tracking ID"></div>
+          </div>
+        </div>
+        <div style="background:var(--navy3);border-radius:var(--radius);padding:14px;margin-bottom:1rem">
+          <div class="modal-section-title" style="margin-bottom:12px"><i class="ti ti-coins"></i> Pricing</div>
+          <div class="form-grid three">
+            <div class="form-group"><label>Sample price (¥)</label><input type="number" id="edit-amount" placeholder="0.00" step="0.01" min="0"></div>
+            <div class="form-group"><label>Bulk price (¥)</label><input type="number" id="edit-bulkprice" placeholder="MOQ price" step="0.01" min="0"></div>
+            <div class="form-group"><label>Qty ordered</label><input type="number" id="edit-qty" placeholder="1" min="1"></div>
+          </div>
+        </div>
+          <div class="form-grid">
+            <div class="form-group"><label>Payment status</label>
+              <select id="edit-paystatus"><option value="">— Select —</option><option>Paid</option><option>Pending</option><option>Partial</option></select>
+            </div>
+            <div class="form-group"><label>PI number</label><input type="text" id="edit-pi" placeholder="PI-2026-001"></div>
+          </div>
+        </div>
+        <div style="background:var(--navy3);border-radius:var(--radius);padding:14px;margin-bottom:1rem">
+          <div class="modal-section-title" style="margin-bottom:12px"><i class="ti ti-star"></i> Evaluation</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Quality rating</label>
+              <select id="edit-rating"><option value="">— Rate after receipt —</option><option>5 – Excellent</option><option>4 – Good</option><option>3 – Average</option><option>2 – Below expectations</option><option>1 – Poor</option></select>
+            </div>
+            <div class="form-group"><label>Repurchase intent</label>
+              <select id="edit-intent"><option value="">— Not assessed yet —</option><option>High – likely bulk order</option><option>Medium – needs revision</option><option>Low – not pursuing</option></select>
+            </div>
+            <div class="form-group full"><label>Internal notes</label><textarea id="edit-notes" style="min-height:64px" placeholder="Update notes…"></textarea></div>
+          </div>
+        </div>
+        <div id="edit-status-msg" class="status-msg"></div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="document.getElementById('edit-modal').style.display='none'">Cancel</button>
+          <button class="btn btn-primary" onclick="saveEdit()"><i class="ti ti-device-floppy" style="font-size:13px"></i> Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+
+
+
+const SHEET_ID = '1RLfuv9bWV2sQM9SREQqjR-3mvYDN0ST5i4-2oGjcbVE';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwH0YmTWjyQdgiCEFnEtQvEPNPqSS9uRTV0WZxoHg_O7R4iuueit-23CXXBzmEjavkf/exec';
+
+let orders = JSON.parse(localStorage.getItem('ch_sample_orders') || '[]');
+let uploadedFiles = { images: [], docs: [] };
+let skuCount = 0;
+let piFileData = null;
+let editingIdx = null;
+let isSyncing = false;
+
+async function syncFromSheet() {
+  if (isSyncing) return;
+  isSyncing = true;
+  const indicator = document.getElementById('sync-indicator');
+  if (indicator) indicator.style.display = 'inline-flex';
+  try {
+    const res = await fetch('/api/sync', { method: 'GET' });
+    if (!res.ok) throw new Error('Sync HTTP ' + res.status);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { throw new Error('Invalid JSON from sync'); }
+    if (!Array.isArray(data)) return;
+    orders = data.map(row => ({
+      id:          row['Order ID'] || '',
+      loggedAt:    row['Logged Date'] || '',
+      date:        row['Order Date'] || '',
+      member:      row['Team Member'] || '',
+      supplier:    row['Supplier Name'] || '',
+      contact:     row['Supplier Contact'] || '',
+      channel:     row['Channel'] || '',
+      link:        row['Alibaba Link'] || '',
+      product:     row['Product Name'] || '',
+      description: row['Product Description'] || '',
+      brand:       row['Target Brand'] || '',
+      qty:         row['Qty'] || '',
+      sku:         row['SKU / Model'] || '',
+      material:    row['Material'] || '',
+      moq:         row['MOQ (Quoted)'] || '',
+      currency:    row['Currency'] || 'CNY',
+      amount:      row['Sample Price (CNY)'] || '',
+      bulkPrice:   row['Bulk Price (CNY)'] || '',
+      shipping:    row['Shipping'] || '',
+      total:       row['Total Cost (CNY)'] || '',
+      payment:     row['Payment Mode'] || '',
+      payStatus:   row['Payment Status'] || '',
+      piNo:        row['PI Number'] || '',
+      status:      row['Sample Status'] || '',
+      eta:         row['Expected Delivery'] || '',
+      tracking:    row['Tracking No.'] || '',
+      notes:       row['Internal Notes'] || '',
+      intent:      row['Repurchase Intent'] || '',
+      rating:      row['Quality Rating'] || '',
+      images:      row['Image URLs'] || '',
+      docs:        row['PI Document URL'] || ''
+    }));
+    localStorage.setItem('ch_sample_orders', JSON.stringify(orders));
+  } catch(e) {
+    console.error('Sync error:', e);
+  }
+  isSyncing = false;
+  if (indicator) indicator.style.display = 'none';
+}
+
+// ---- TABS ----
+async function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const map = { log: 0, dashboard: 1, orders: 2, gallery: 3 };
+  document.querySelectorAll('.tab')[map[name]].classList.add('active');
+  if (name !== 'log') {
+    try { await syncFromSheet(); } catch(e) { console.error('Sync failed:', e); }
+  }
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'orders') renderTable();
+  if (name === 'gallery') renderGallery();
+}
+
+// ---- FILE ATTACHMENTS ----
+function handleFiles(input, listId, type) {
+  const key = type === 'image' ? 'images' : 'docs';
+  uploadedFiles[key] = [...uploadedFiles[key], ...Array.from(input.files)];
+  renderFileList(listId, key);
+}
+function renderFileList(listId, key) {
+  document.getElementById(listId).innerHTML = uploadedFiles[key].map((f, i) =>
+    `<div class="file-item"><i class="ti ti-file" style="font-size:14px;color:var(--text3)"></i><span>${f.name}</span><button class="remove-file" onclick="removeFile('${key}',${i},'${listId}')"><i class="ti ti-x"></i></button></div>`
+  ).join('');
+}
+function removeFile(key, idx, listId) { uploadedFiles[key].splice(idx, 1); renderFileList(listId, key); }
+
+// ---- HELPERS ----
+function getVal(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function setVal(id, val) { const el = document.getElementById(id); if (el && val) el.value = val; }
+function showStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.innerHTML = `<i class="ti ti-${type === 'success' ? 'circle-check' : 'alert-circle'}"></i> ${msg}`;
+  el.className = 'status-msg status-' + type;
+  setTimeout(() => { el.className = 'status-msg'; el.style.display = ''; }, 6000);
+}
+
+function driveImgUrl(url) {
+  // Convert Drive view URL to thumbnail URL which loads reliably in browsers
+  if (!url) return '';
+  const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w400';
+  return url;
+}
+let imageUrls = []; // stores {name, url} after upload
+let piDocUrls = []; // stores {name, url} after PI upload
+
+async function handleImageUpload(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  const label = document.getElementById('img-upload-label');
+  const icon  = document.getElementById('img-upload-icon');
+  label.textContent = 'Uploading ' + files.length + ' image(s) to Drive…';
+  icon.className = 'ti ti-loader';
+
+  for (const file of files) {
+    try {
+      const base64Data = await fileToBase64(file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, mimeType: file.type, base64Data })
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        imageUrls.push({ name: file.name, url: data.url });
+      } else {
+        imageUrls.push({ name: file.name, url: '' });
+        console.error('Upload failed:', data.error);
+      }
+    } catch(e) {
+      imageUrls.push({ name: file.name, url: '' });
+      console.error('Upload error:', e);
+    }
+  }
+
+  label.textContent = imageUrls.length + ' image(s) uploaded to Drive';
+  icon.className = 'ti ti-circle-check';
+  renderImageList();
+}
+
+function renderImageList() {
+  document.getElementById('img-list').innerHTML = imageUrls.map((f, i) => `
+    <div class="file-item">
+      ${f.url ? `<img src="${driveImgUrl(f.url)}" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0">` : '<i class="ti ti-photo" style="font-size:14px;color:var(--text3)"></i>'}
+      <span style="font-size:12px">${f.name}</span>
+      ${f.url ? `<a href="${f.url}" target="_blank" style="margin-left:auto;color:var(--text3);font-size:11px"><i class="ti ti-external-link"></i></a>` : ''}
+      <button class="remove-file" onclick="removeImage(${i})"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+}
+
+function removeImage(idx) {
+  imageUrls.splice(idx, 1);
+  renderImageList();
+  if (!imageUrls.length) {
+    document.getElementById('img-upload-label').textContent = 'Click to attach product photos';
+    document.getElementById('img-upload-icon').className = 'ti ti-photo';
+  }
+}
+
+async function handlePIDocUpload(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const label = document.getElementById('pi-upload-label');
+  const icon  = document.getElementById('pi-upload-icon');
+  label.textContent = 'Uploading ' + files.length + ' file(s) to Drive…';
+  icon.className = 'ti ti-loader';
+
+  for (const file of files) {
+    try {
+      const base64Data = await fileToBase64(file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'pi_upload', fileName: file.name, mimeType: file.type || 'application/octet-stream', base64Data })
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        piDocUrls.push({ name: file.name, url: data.url });
+      } else {
+        piDocUrls.push({ name: file.name, url: '' });
+      }
+    } catch(e) {
+      piDocUrls.push({ name: file.name, url: '' });
+    }
+  }
+
+  label.textContent = piDocUrls.length + ' file(s) uploaded to Drive';
+  icon.className = 'ti ti-circle-check';
+  renderPIDocList();
+}
+
+function renderPIDocList() {
+  document.getElementById('pi-list').innerHTML = piDocUrls.map((f, i) => `
+    <div class="file-item">
+      <i class="ti ti-file-invoice" style="font-size:14px;color:var(--text3)"></i>
+      <span style="font-size:12px">${f.name}</span>
+      ${f.url ? `<a href="${f.url}" target="_blank" style="margin-left:auto;color:var(--text3);font-size:11px"><i class="ti ti-external-link"></i></a>` : ''}
+      <button class="remove-file" onclick="removePIDoc(${i})"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+}
+
+function removePIDoc(idx) {
+  piDocUrls.splice(idx, 1);
+  renderPIDocList();
+  if (!piDocUrls.length) {
+    document.getElementById('pi-upload-label').textContent = 'Click to attach PI or documents';
+    document.getElementById('pi-upload-icon').className = 'ti ti-file-invoice';
+  }
+}
+function updatePITotal() {
+  const skus = getSKUs();
+  const skuTotal = skus.reduce((s, sk) => s + parseFloat(sk.amount || 0) * parseFloat(sk.qty || 1), 0);
+  const shipping = parseFloat(document.getElementById('f-shipping')?.value || 0);
+  const total = skuTotal + shipping;
+  const el = document.getElementById('pi-total-display');
+  if (el) el.textContent = '¥' + total.toFixed(2);
+}
+
+function addSKU(name = '', product = '', sku = '', qty = '', amount = '') {
+  skuCount++;
+  const id = skuCount;
+  const div = document.createElement('div');
+  div.className = 'sku-row';
+  div.id = 'sku-row-' + id;
+  div.innerHTML = `
+    <div class="form-group">
+      <label>Product name ${id === 1 ? '<span style="color:var(--amber)">*</span>' : ''}</label>
+      <input type="text" id="sku-name-${id}" placeholder="e.g. Trash Can" value="${name}" style="font-weight:600">
+    </div>
+    <div class="form-group">
+      <label>Full description</label>
+      <input type="text" id="sku-product-${id}" placeholder="e.g. 9L Plastic Slim Sensor Trash Bin, ABS+PP" value="${product}">
+    </div>
+    <div class="form-group">
+      <label>SKU / Model</label>
+      <input type="text" id="sku-code-${id}" placeholder="Supplier code" value="${sku}">
+    </div>
+    <div class="form-group">
+      <label>Qty</label>
+      <input type="number" id="sku-qty-${id}" placeholder="1" min="1" value="${qty}" oninput="updatePITotal()">
+    </div>
+    <div class="form-group">
+      <label>Unit price (¥)</label>
+      <input type="number" id="sku-amount-${id}" placeholder="0.00" step="0.01" value="${amount}" oninput="updatePITotal()">
+    </div>
+    <div class="form-group">
+      <label>Bulk price (¥)</label>
+      <input type="number" id="sku-bulk-${id}" placeholder="MOQ price" step="0.01" value="" style="border-color:rgba(232,168,76,0.3)">
+    </div>
+    ${id > 1 ? `<button type="button" class="sku-remove" onclick="removeSKU(${id})"><i class="ti ti-trash" style="font-size:15px"></i></button>` : '<div></div>'}
+  `;
+  document.getElementById('sku-list').appendChild(div);
+}
+function removeSKU(id) { const el = document.getElementById('sku-row-' + id); if (el) el.remove(); }
+function getSKUs() {
+  return Array.from(document.querySelectorAll('[id^="sku-row-"]')).map(r => {
+    const id = r.id.replace('sku-row-', '');
+    return {
+      name: document.getElementById('sku-name-' + id)?.value?.trim() || '',
+      product: document.getElementById('sku-product-' + id)?.value?.trim() || '',
+      sku: document.getElementById('sku-code-' + id)?.value?.trim() || '',
+      qty: document.getElementById('sku-qty-' + id)?.value?.trim() || '',
+      amount: document.getElementById('sku-amount-' + id)?.value?.trim() || '',
+      bulkPrice: document.getElementById('sku-bulk-' + id)?.value?.trim() || ''
+    };
+  }).filter(s => s.name || s.product);
+}
+
+// ---- SUBMIT ORDER ----
+async function submitOrder() {
+  const req = [
+    { id: 'f-date', name: 'Order date' }, { id: 'f-member', name: 'Team member' },
+    { id: 'f-supplier', name: 'Supplier name' }, { id: 'f-channel', name: 'Order channel' },
+    { id: 'f-payment', name: 'Payment mode' }
+  ];
+  for (const r of req) { if (!getVal(r.id)) { showStatus('Please fill in: ' + r.name, 'error'); return; } }
+  const skus = getSKUs();
+  if (!skus.length) { showStatus('Please add at least one product / SKU', 'error'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.innerHTML = '<i class="ti ti-loader" style="font-size:13px"></i> Saving…'; btn.disabled = true;
+
+  // Wait up to 10s for any pending PI upload to finish
+  if (document.getElementById('pi-upload-icon')?.className?.includes('loader')) {
+    showStatus('Waiting for PI upload to complete…', 'error');
+    let waited = 0;
+    while (document.getElementById('pi-upload-icon')?.className?.includes('loader') && waited < 10000) {
+      await new Promise(r => setTimeout(r, 500));
+      waited += 500;
+    }
+  }
+
+  const base = {
+    loggedAt: new Date().toISOString().slice(0, 10),
+    date: getVal('f-date'), member: getVal('f-member'),
+    supplier: getVal('f-supplier'), contact: getVal('f-contact'),
+    channel: getVal('f-channel'), link: getVal('f-link'),
+    brand: getVal('f-brand'), material: getVal('f-material'), moq: getVal('f-moq'),
+    currency: getVal('f-currency') || 'CNY',
+    shipping: getVal('f-shipping') || '0',
+    payment: getVal('f-payment'), payStatus: getVal('f-paystatus'), piNo: getVal('f-pi'),
+    status: getVal('f-status') || 'Order placed', eta: getVal('f-eta'),
+    tracking: getVal('f-tracking'),
+    notes: getVal('f-notes'), intent: getVal('f-intent'), rating: getVal('f-rating'),
+    images: imageUrls.map(f => f.url || f.name).join('; '),
+    docs: piDocUrls.map(f => f.url || f.name).join('; ')
+  };
+
+  for (const s of skus) {
+    const row = {
+      ...base,
+      id: 'SO-' + Date.now().toString().slice(-6),
+      product: s.name || s.product,
+      description: s.product,
+      sku: s.sku, qty: s.qty || '1',
+      amount: s.amount || '0',
+      bulkPrice: s.bulkPrice || '',
+      total: (parseFloat(s.amount || 0) + parseFloat(base.shipping) / skus.length).toFixed(2)
+    };
+    orders.push(row);
+    await pushToSheet(row);
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  localStorage.setItem('ch_sample_orders', JSON.stringify(orders));
+  btn.innerHTML = '<i class="ti ti-send" style="font-size:13px"></i> Save to Google Sheet'; btn.disabled = false;
+  showStatus('✓ ' + skus.length + ' SKU(s) saved!', 'success');
+  clearForm();
+}
+
+async function pushToSheet(row) {
+  const rowArr = [row.id, row.loggedAt, row.date, row.member, row.supplier, row.contact, row.channel, row.link, row.product, row.description, row.brand, row.qty, row.sku, row.material, row.moq, row.currency, row.amount, row.bulkPrice || '', row.shipping, row.total, row.payment, row.payStatus, row.piNo, row.status, row.eta, row.tracking, row.notes, row.intent, row.rating, row.images, row.docs];
+  try {
+    const res = await fetch('/api/sheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ row: rowArr })
+    });
+    const data = await res.json();
+    return data.success === true;
+  } catch (e) { console.error('Sheet error:', e); return false; }
+}
+
+async function updateInSheet(row) {
+  const rowArr = [row.id, row.loggedAt, row.date, row.member, row.supplier, row.contact, row.channel, row.link, row.product, row.description, row.brand, row.qty, row.sku, row.material, row.moq, row.currency, row.amount, row.bulkPrice || '', row.shipping, row.total, row.payment, row.payStatus, row.piNo, row.status, row.eta, row.tracking, row.notes, row.intent, row.rating, row.images, row.docs];
+  try {
+    const res = await fetch('/api/sheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'update', row: rowArr })
+    });
+    const data = await res.json();
+    return data.success === true;
+  } catch(e) { console.error('Update error:', e); return false; }
+}
+
+function clearForm() {
+  ['f-date','f-member','f-supplier','f-contact','f-channel','f-link','f-brand','f-material','f-moq','f-currency','f-shipping','f-payment','f-paystatus','f-pi','f-status','f-eta','f-tracking','f-notes','f-intent','f-rating']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('img-list').innerHTML = '';
+  document.getElementById('pi-list').innerHTML = '';
+  imageUrls = [];
+  piDocUrls = [];
+  document.getElementById('img-upload-label').textContent = 'Click to attach product photos';
+  document.getElementById('img-upload-icon').className = 'ti ti-photo';
+  document.getElementById('pi-upload-label').textContent = 'Click to attach PI or documents';
+  document.getElementById('pi-upload-icon').className = 'ti ti-file-invoice';
+  document.getElementById('nc').textContent = '0/500';
+  uploadedFiles = { images: [], docs: [] };
+  document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('sku-list').innerHTML = '';
+  skuCount = 0; addSKU();
+  const piTotal = document.getElementById('pi-total-display');
+  if (piTotal) piTotal.textContent = '¥0.00';
+  piFileData = null;
+  document.getElementById('pi-fetch-label').textContent = 'Click to upload Proforma Invoice';
+  document.getElementById('pi-fetch-icon').className = 'ti ti-file-upload';
+  document.getElementById('pi-fetch-btn').disabled = true;
+  document.getElementById('pi-fetch-status').style.display = 'none';
+  document.getElementById('pi-autofetch-input').value = '';
+}
+
+// ---- DASHBOARD ----
+function renderDashboard() {
+  const totalSKUs = orders.length;
+  const spend = orders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
+  const distinctPIs = new Set(orders.map(o => o.piNo).filter(p => p && p.trim())).size;
+  const distinctProducts = new Set(orders.map(o => o.product).filter(p => p && p.trim())).size;
+
+  document.getElementById('metrics').innerHTML =
+    `<div class="metric-card"><div class="mlabel">Total PIs</div><div class="mval">${distinctPIs}</div><div class="msub">proforma invoices</div></div>` +
+    `<div class="metric-card"><div class="mlabel">Total spend</div><div class="mval">¥${spend.toFixed(0)}</div><div class="msub">samples + shipping</div></div>` +
+    `<div class="metric-card"><div class="mlabel">Products</div><div class="mval">${distinctProducts}</div><div class="msub">distinct product names</div></div>` +
+    `<div class="metric-card"><div class="mlabel">Total SKUs</div><div class="mval">${totalSKUs}</div><div class="msub">line items ordered</div></div>`;
+  const members = ['Dhiraj', 'Dheeraj', 'Nitin', 'Akarsh'];
+  document.getElementById('member-grid').innerHTML = members.map(m => {
+    const mo = orders.filter(o => o.member === m);
+    const ms = mo.reduce((s, o) => s + parseFloat(o.total || 0), 0);
+    const pct = totalSKUs ? Math.round(mo.length / totalSKUs * 100) : 0;
+    return `<div class="member-card"><div class="mname">${m}<span class="badge badge-transit">${mo.length} orders</span></div><div class="mspend">¥${ms.toFixed(0)}</div><div class="mdetail">${mo.filter(o => o.status === 'Approved').length} approved · ${pct}% of total</div></div>`;
+  }).join('');
+  const brands = {};
+  orders.forEach(o => { if (o.brand) brands[o.brand] = (brands[o.brand] || 0) + 1; });
+  document.getElementById('cat-grid').innerHTML = Object.entries(brands).length
+    ? Object.entries(brands).map(([b, n]) => `<div class="cat-card"><div class="clabel">${b}</div><div class="cval">${n}</div></div>`).join('')
+    : '<div style="color:var(--text3);font-size:13px">No data yet.</div>';
+}
+
+// ---- ALL ORDERS TABLE ----
+function renderTable() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const fm = document.getElementById('fil-member').value;
+  const fs = document.getElementById('fil-status').value;
+  const fb = document.getElementById('fil-brand').value;
+  const filtered = orders.filter(o => {
+    const m = !q || [o.supplier, o.product, o.id, o.description].join(' ').toLowerCase().includes(q);
+    return m && (!fm || o.member === fm) && (!fs || o.status === fs) && (!fb || o.brand === fb);
+  });
+  const c = document.getElementById('table-container');
+  if (!filtered.length) { c.innerHTML = '<div class="empty-state"><i class="ti ti-inbox"></i><p>No orders match your filters.</p></div>'; return; }
+  const sc = { 'Received': 'badge-received', 'Approved': 'badge-approved', 'In transit': 'badge-transit', 'Rejected': 'badge-rejected' };
+  c.innerHTML = '<table class="orders-table"><thead><tr>' +
+    '<th style="width:80px">ID</th><th style="width:88px">Date</th><th style="width:85px">Member</th>' +
+    '<th style="width:130px">Supplier</th><th>Product</th><th style="width:85px">Channel</th>' +
+    '<th style="width:75px">Total</th><th style="width:108px">Status</th><th style="width:52px"></th>' +
+    '</tr></thead><tbody>' +
+    filtered.map(o => {
+      const idx = orders.indexOf(o);
+      return `<tr>
+        <td style="font-size:11px;color:var(--text3);font-family:monospace">${o.id}</td>
+        <td style="color:var(--text2)">${o.date}</td>
+        <td style="font-weight:500">${o.member}</td>
+        <td title="${o.supplier}">${o.supplier}</td>
+        <td title="${o.product}" style="color:var(--text2)">${o.product}</td>
+        <td><span class="badge ${o.channel === 'Alibaba' ? 'badge-alibaba' : 'badge-email'}">${o.channel}</span></td>
+        <td style="font-weight:600;color:var(--amber)">¥${parseFloat(o.total || 0).toFixed(0)}</td>
+        <td><span class="badge ${sc[o.status] || 'badge-placed'}">${o.status || '—'}</span></td>
+        <td><button onclick="openEditModal(${idx})" title="Edit" class="edit-btn"><i class="ti ti-edit"></i></button></td>
+      </tr>`;
+    }).join('') + '</tbody></table>';
+}
+
+// ---- EDIT MODAL ----
+function openEditModal(idx) {
+  const o = orders[idx]; if (!o) return;
+  editingIdx = idx;
+  document.getElementById('edit-modal-title').textContent = o.product || '—';
+  document.getElementById('edit-modal-sub').textContent = o.supplier + ' · ' + o.id;
+  document.getElementById('edit-status').value = o.status || '';
+  document.getElementById('edit-eta').value = o.eta || '';
+  document.getElementById('edit-tracking').value = o.tracking || '';
+  document.getElementById('edit-paystatus').value = o.payStatus || '';
+  document.getElementById('edit-pi').value = o.piNo || '';
+  document.getElementById('edit-rating').value = o.rating || '';
+  document.getElementById('edit-intent').value = o.intent || '';
+  document.getElementById('edit-notes').value = o.notes || '';
+  document.getElementById('edit-amount').value = o.amount || '';
+  document.getElementById('edit-bulkprice').value = o.bulkPrice || '';
+  document.getElementById('edit-qty').value = o.qty || '';
+  document.getElementById('edit-status-msg').className = 'status-msg';
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+function saveEdit() {
+  if (editingIdx === null) return;
+  const o = orders[editingIdx];
+
+  const map = {
+    status: 'edit-status', eta: 'edit-eta', tracking: 'edit-tracking',
+    payStatus: 'edit-paystatus', piNo: 'edit-pi', rating: 'edit-rating',
+    intent: 'edit-intent', notes: 'edit-notes',
+    amount: 'edit-amount', bulkPrice: 'edit-bulkprice', qty: 'edit-qty'
+  };
+
+  Object.entries(map).forEach(([key, id]) => {
+    const v = document.getElementById(id)?.value;
+    if (v !== undefined && v !== '') o[key] = v;
+  });
+
+  // Recalculate total if price or qty changed
+  o.total = (parseFloat(o.amount || 0) + parseFloat(o.shipping || 0)).toFixed(2);
+  o.lastEdited = new Date().toISOString().slice(0, 10);
+  orders[editingIdx] = o;
+  localStorage.setItem('ch_sample_orders', JSON.stringify(orders));
+
+  // Push updated row to sheet as an UPDATE (overwrites existing row)
+  updateInSheet(o);
+
+  const msg = document.getElementById('edit-status-msg');
+  msg.innerHTML = '<i class="ti ti-circle-check"></i> Changes saved!';
+  msg.className = 'status-success';
+  setTimeout(() => {
+    document.getElementById('edit-modal').style.display = 'none';
+    renderTable();
+  }, 1200);
+}
+
+// ---- GALLERY ----
+function renderGallery() {
+  const q  = (document.getElementById('gallery-search').value || '').toLowerCase();
+  const fb = document.getElementById('gallery-brand').value;
+  const filtered = orders.filter(o => {
+    const m = !q || [o.product, o.supplier, o.description].join(' ').toLowerCase().includes(q);
+    return m && (!fb || o.brand === fb);
+  });
+  const g = document.getElementById('gallery-grid');
+  if (!filtered.length) { g.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-photo-off"></i><p>No products yet.</p></div>'; return; }
+
+  // Group by product name + supplier — one card per product per supplier
+  const productMap = {};
+  filtered.forEach(o => {
+    const key = (o.product || o.id) + '||' + (o.supplier || '');
+    if (!productMap[key]) productMap[key] = { ...o, allImages: [], skuCount: 0, piNos: new Set() };
+    productMap[key].skuCount++;
+    if (o.piNo) productMap[key].piNos.add(o.piNo);
+    if (o.images) {
+      o.images.split(';').map(s => s.trim()).filter(s => s.startsWith('http')).forEach(url => {
+        if (!productMap[key].allImages.includes(url)) productMap[key].allImages.push(url);
+      });
+    }
+  });
+
+  const sc = { 'Received':'badge-received','Approved':'badge-approved','In transit':'badge-transit','Rejected':'badge-rejected','Order placed':'badge-placed' };
+  window._galleryOrders = Object.values(productMap);
+
+  g.innerHTML = Object.values(productMap).map((o, i) => {
+    const imgUrl = o.allImages[0] ? driveImgUrl(o.allImages[0]) : '';
+    const imgHtml = imgUrl
+      ? `<img src="${imgUrl}" style="width:100%;height:180px;object-fit:contain;background:var(--navy3);display:block;padding:8px" onerror="this.style.display='none';this.parentElement.innerHTML+='<div class=gallery-img-placeholder style=height:180px><i class=ti-ti-photo-off style=font-size:28px></i><span style=font-size:11px>No image</span></div>'">`
+      : `<div class="gallery-img-placeholder" style="height:180px"><i class="ti ti-photo-off" style="font-size:28px"></i><span style="font-size:11px">No image</span></div>`;
+    return `<div class="gallery-card" onclick="openModal(${i})">
+      ${imgHtml}
+      <div class="gallery-info">
+        <div class="gallery-name" title="${o.product}">${o.product}</div>
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.supplier || '—'}</div>
+        <div class="gallery-meta" style="margin-top:8px">
+          <span class="badge ${sc[o.status] || 'badge-placed'}" style="font-size:10px;padding:2px 7px">${o.status || '—'}</span>
+          <span style="font-size:11px;color:var(--text3)">${o.skuCount} SKU${o.skuCount > 1 ? 's' : ''}</span>
+        </div>
+        ${o.piNos && o.piNos.size > 0 ? `<div style="font-size:10px;color:var(--text3);margin-top:4px">${o.piNos.size} PI${o.piNos.size > 1 ? 's' : ''}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openModal(idx) {
+  const o = window._galleryOrders[idx]; if (!o) return;
+  const sc = { 'Received': 'badge-received', 'Approved': 'badge-approved', 'In transit': 'badge-transit', 'Rejected': 'badge-rejected', 'Order placed': 'badge-placed' };
+
+  // Find ALL SKUs for this product + supplier across all PIs
+  const allSKUs = orders.filter(r => r.product === o.product && r.supplier === o.supplier);
+  const totalSpend = allSKUs.reduce((s, r) => s + parseFloat(r.total || 0), 0);
+  const totalQty = allSKUs.reduce((s, r) => s + parseInt(r.qty || 1), 0);
+
+  // Image
+  const imgWrap = document.getElementById('modal-img-wrap');
+  const firstImg = o.allImages && o.allImages[0] ? driveImgUrl(o.allImages[0]) : '';
+  if (firstImg) {
+    imgWrap.innerHTML = `<img src="${firstImg}" style="width:100%;height:220px;object-fit:contain;background:var(--navy3);border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding:12px" onerror="this.parentElement.innerHTML='<div class=modal-img-placeholder><i class=ti style=font-size:36px></i><span>Image unavailable</span></div>'">`;
+  } else {
+    imgWrap.innerHTML = `<div class="modal-img-placeholder"><i class="ti ti-photo-off" style="font-size:36px"></i><span>No image attached</span></div>`;
+  }
+
+  // Header
+  document.getElementById('modal-product').textContent = o.product || '—';
+  document.getElementById('modal-supplier').textContent = o.supplier || '';
+  document.getElementById('modal-status-badge').innerHTML = `<span class="badge ${sc[o.status] || 'badge-placed'}">${o.status || '—'}</span>`;
+
+  // Supplier fields
+  document.getElementById('modal-supplier-fields').innerHTML = mf([
+    ['Contact', o.contact], ['Channel', o.channel], ['Order date', o.date],
+    ['Logged by', o.member], ['Brand', o.brand], ['Alibaba link', o.link],
+    ['MOQ', o.moq], ['Material', o.material]
+  ]);
+
+  // SKU table — all variants
+  const skuRows = allSKUs.map(r =>
+    `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 6px;font-size:12px;color:var(--text2)">${r.description || r.product}</td>
+      <td style="padding:8px 6px;font-size:12px;color:var(--text3);font-family:monospace">${r.sku || '—'}</td>
+      <td style="padding:8px 6px;font-size:11px;color:var(--text3);font-family:monospace">${r.piNo || '—'}</td>
+      <td style="padding:8px 6px;font-size:12px;text-align:center">${r.qty || '1'}</td>
+      <td style="padding:8px 6px;font-size:12px;text-align:right;color:var(--amber);font-weight:600">${r.amount ? '¥' + parseFloat(r.amount).toFixed(2) : '—'}</td>
+      <td style="padding:8px 6px;font-size:12px;text-align:right;color:var(--success-text)">${r.bulkPrice ? '¥' + parseFloat(r.bulkPrice).toFixed(2) : '—'}</td>
+    </tr>`
+  ).join('');
+  document.getElementById('modal-product-fields').innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="padding:6px;font-size:10px;color:var(--text3);text-align:left;font-weight:700;text-transform:uppercase">Description</th>
+        <th style="padding:6px;font-size:10px;color:var(--text3);text-align:left;font-weight:700;text-transform:uppercase">SKU</th>
+        <th style="padding:6px;font-size:10px;color:var(--text3);text-align:left;font-weight:700;text-transform:uppercase">PI</th>
+        <th style="padding:6px;font-size:10px;color:var(--text3);text-align:center;font-weight:700;text-transform:uppercase">Qty</th>
+        <th style="padding:6px;font-size:10px;color:var(--amber);text-align:right;font-weight:700;text-transform:uppercase">Sample ¥</th>
+        <th style="padding:6px;font-size:10px;color:var(--success-text);text-align:right;font-weight:700;text-transform:uppercase">Bulk ¥</th>
+      </tr></thead>
+      <tbody>${skuRows}</tbody>
+      <tfoot><tr>
+        <td colspan="4" style="padding:8px 6px;font-size:11px;color:var(--text3);font-weight:600">${allSKUs.length} SKU(s) · ${totalQty} units total</td>
+        <td colspan="2" style="padding:8px 6px;text-align:right;font-weight:700;color:var(--amber)">¥${totalSpend.toFixed(2)}</td>
+      </tr></tfoot>
+    </table>`;
+
+  // Financials — aggregated
+  document.getElementById('modal-financial-fields').innerHTML = mf([
+    ['Total SKU value', '¥' + allSKUs.reduce((s,r) => s + parseFloat(r.amount||0) * parseInt(r.qty||1), 0).toFixed(2)],
+    ['Shipping', o.shipping && o.shipping !== '0' ? '¥' + parseFloat(o.shipping).toFixed(2) : ''],
+    ['Total PI value', '¥' + totalSpend.toFixed(2)],
+    ['Currency', o.currency], ['Payment', o.payment],
+    ['Pay status', o.payStatus], ['PI no.', o.piNo]
+  ]);
+
+  // Logistics
+  document.getElementById('modal-logistics-fields').innerHTML = mf([
+    ['Expected delivery', o.eta], ['Tracking', o.tracking],
+    ['PI Document', o.docs && o.docs.startsWith('http') ? `<a href="${o.docs.split(';')[0].trim()}" target="_blank" style="color:var(--amber);text-decoration:none">${o.piNo || 'View PI'} <i class="ti ti-external-link" style="font-size:11px"></i></a>` : o.docs],
+    ['Intent', o.intent], ['Rating', o.rating]
+  ]);
+
+  // Notes
+  const ns = document.getElementById('modal-notes-section');
+  if (o.notes) { ns.style.display = 'block'; document.getElementById('modal-notes').textContent = o.notes; }
+  else { ns.style.display = 'none'; }
+
+  document.getElementById('product-modal').style.display = 'flex';
+}
+
+function mf(fields) {
+  return fields.filter(([l, v]) => v && v.toString().trim())
+    .map(([l, v]) => `<div class="modal-field"><div class="fl">${l}</div><div class="fv">${v}</div></div>`).join('');
+}
+
+// ---- PI AUTO-FETCH ----
+const EXTRACT_PROMPT = `You are a proforma invoice parser. Extract all available information and return ONLY a valid JSON object with these exact keys (use empty string "" if not found):
+{
+  "supplier_name": "",
+  "contact_person": "",
+  "order_channel": "",
+  "alibaba_link": "",
+  "pi_number": "",
+  "order_date": "",
+  "payment_mode": "",
+  "payment_status": "",
+  "shipping_cost": "",
+  "currency": "",
+  "material": "",
+  "moq": "",
+  "eta": "",
+  "tracking": "",
+  "notes": "",
+  "skus": [{"name": "", "product": "", "sku": "", "qty": "", "unit_price": ""}]
+}
+Rules:
+- order_channel: one of Alibaba, Email, WeChat, WhatsApp, Direct / In-person
+- currency: one of CNY, USD, INR, EUR
+- payment_mode: one of Alibaba Trade Assurance, PayPal, Bank transfer (SWIFT), Alipay, WeChat Pay, Cash, Credit card
+- T/T = Bank transfer (SWIFT)
+- skus[].name = SHORT generic name 2-4 words grouping similar items (e.g. all trash bin variants → "Sensor Trash Bin")
+- skus[].product = full supplier description text
+- skus[].unit_price = number only, no currency symbol
+- order_date and eta in YYYY-MM-DD format
+- notes = payment terms + shipment date + any remarks
+Return ONLY the JSON. No markdown. No explanation.`;
+
+function handlePIUpload(input) {
+  const file = input.files[0]; if (!file) return;
+  piFileData = file;
+  document.getElementById('pi-fetch-label').textContent = file.name;
+  document.getElementById('pi-fetch-icon').className = 'ti ti-file-check';
+  document.getElementById('pi-fetch-btn').disabled = false;
+
+  // Auto-upload to Drive PI folder as well
+  uploadPIFileToDrive(file);
+}
+
+async function uploadPIFileToDrive(file) {
+  // Show upload status on the PI doc zone
+  document.getElementById('pi-upload-label').textContent = 'Uploading ' + file.name + ' to Drive…';
+  document.getElementById('pi-upload-icon').className = 'ti ti-loader';
+  try {
+    const base64Data = await fileToBase64(file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'pi_upload', fileName: file.name, mimeType: file.type || 'application/octet-stream', base64Data })
+    });
+    const data = await res.json();
+    if (data.success && data.url) {
+      piDocUrls = [{ name: file.name, url: data.url }];
+    } else {
+      piDocUrls = [{ name: file.name, url: '' }];
+    }
+  } catch(e) {
+    piDocUrls = [{ name: file.name, url: '' }];
+  }
+  document.getElementById('pi-upload-label').textContent = file.name + ' uploaded to Drive';
+  document.getElementById('pi-upload-icon').className = 'ti ti-circle-check';
+  renderPIDocList();
+}
+
+function setFetchStatus(msg, color) {
+  const el = document.getElementById('pi-fetch-status');
+  el.style.cssText = `display:flex;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;align-items:center;gap:8px;${color}`;
+  el.innerHTML = msg;
+}
+
+async function fetchFromPI() {
+  if (!piFileData) return;
+
+  const btn = document.getElementById('pi-fetch-btn');
+  btn.innerHTML = '<i class="ti ti-loader" style="font-size:13px"></i> Extracting…'; btn.disabled = true;
+  setFetchStatus('<i class="ti ti-loader"></i> Reading your PI…', 'background:rgba(232,168,76,0.1);color:var(--amber);border:1px solid rgba(232,168,76,0.2)');
+  await new Promise(r => setTimeout(r, 60));
+
+  try {
+    const isImage = piFileData.type.startsWith('image/');
+    const isExcel = /\.(xlsx|xls|csv)$/i.test(piFileData.name);
+    let contentParts;
+
+    if (isExcel) {
+      setFetchStatus('<i class="ti ti-loader"></i> Parsing Excel file…', 'background:rgba(232,168,76,0.1);color:var(--amber);border:1px solid rgba(232,168,76,0.2)');
+      await new Promise(r => setTimeout(r, 60));
+      if (!window.XLSX) {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+          s.onload = res; s.onerror = () => rej(new Error('Failed to load Excel parser'));
+          document.head.appendChild(s);
+        });
+      }
+      const excelText = await parseExcelToText(piFileData);
+      setFetchStatus('<i class="ti ti-loader"></i> Sending to Claude…', 'background:rgba(232,168,76,0.1);color:var(--amber);border:1px solid rgba(232,168,76,0.2)');
+      await new Promise(r => setTimeout(r, 60));
+      contentParts = [{ type: 'text', text: 'Proforma Invoice extracted from Excel:\n\n' + excelText + '\n\n' + EXTRACT_PROMPT }];
+
+    } else if (isImage) {
+      setFetchStatus('<i class="ti ti-loader"></i> Reading image…', 'background:rgba(232,168,76,0.1);color:var(--amber);border:1px solid rgba(232,168,76,0.2)');
+      await new Promise(r => setTimeout(r, 60));
+      const b64 = await fileToBase64(piFileData);
+      contentParts = [{ type: 'image', source: { type: 'base64', media_type: piFileData.type, data: b64 } }, { type: 'text', text: EXTRACT_PROMPT }];
+
+    } else {
+      setFetchStatus('<i class="ti ti-loader"></i> Reading PDF…', 'background:rgba(232,168,76,0.1);color:var(--amber);border:1px solid rgba(232,168,76,0.2)');
+      await new Promise(r => setTimeout(r, 60));
+      const b64 = await fileToBase64(piFileData);
+      contentParts = [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }, { type: 'text', text: EXTRACT_PROMPT }];
+    }
+
+    setFetchStatus('<i class="ti ti-loader"></i> Claude is extracting details…', 'background:rgba(232,168,76,0.1);color:var(--amber);border:1px solid rgba(232,168,76,0.2)');
+
+    const res = await fetch('/api/extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contentParts })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'API error ' + res.status);
+    const raw = data.content?.map(c => c.text || '').join('') || '';
+    if (!raw) throw new Error('Empty response from server');
+    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    setVal('f-supplier', parsed.supplier_name); setVal('f-contact', parsed.contact_person);
+    setVal('f-channel', parsed.order_channel); setVal('f-link', parsed.alibaba_link);
+    setVal('f-pi', parsed.pi_number); setVal('f-date', parsed.order_date);
+    setVal('f-payment', parsed.payment_mode); setVal('f-paystatus', parsed.payment_status);
+    setVal('f-shipping', parsed.shipping_cost); setVal('f-currency', parsed.currency);
+    setVal('f-material', parsed.material); setVal('f-moq', parsed.moq);
+    setVal('f-eta', parsed.eta); setVal('f-tracking', parsed.tracking);
+    setVal('f-notes', parsed.notes);
+
+    if (parsed.skus?.length) {
+      document.getElementById('sku-list').innerHTML = '';
+      skuCount = 0;
+      parsed.skus.forEach(s => addSKU(s.name, s.product, s.sku, s.qty, s.unit_price));
+    }
+
+    setFetchStatus(`<i class="ti ti-circle-check"></i> Extracted ${parsed.skus?.length || 0} SKU(s). Review and fill in anything missing.`, 'background:rgba(116,198,157,0.12);color:#74c69d;border:1px solid rgba(116,198,157,0.2)');
+
+  } catch (e) {
+    console.error('PI fetch error:', e);
+    setFetchStatus('<i class="ti ti-alert-circle"></i> ' + e.message, 'background:rgba(255,118,117,0.1);color:#ff7675;border:1px solid rgba(255,118,117,0.2)');
+  }
+
+  btn.innerHTML = '<i class="ti ti-sparkles" style="font-size:13px"></i> Extract details'; btn.disabled = false;
+}
+
+async function parseExcelToText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = window.XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        let text = '';
+        wb.SheetNames.forEach(name => {
+          const csv = window.XLSX.utils.sheet_to_csv(wb.Sheets[name], { skipHidden: true });
+          const lines = csv.split('\n').filter(l => l.replace(/,/g, '').trim());
+          text += `Sheet: ${name}\n${lines.join('\n')}\n\n`;
+        });
+        resolve(text);
+      } catch (err) { reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ---- INIT ----
+addSKU();
+document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
+syncFromSheet();
+</script>
+</body>
+</html>
