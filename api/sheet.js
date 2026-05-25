@@ -6,8 +6,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { row } = req.body;
-    if (!row) return res.status(400).json({ error: 'Missing row' });
+    const { type, row } = req.body;
+    if (!row && type !== 'clear') return res.status(400).json({ error: 'Missing row' });
 
     const scriptUrl = 'https://script.google.com/macros/s/AKfycbwH0YmTWjyQdgiCEFnEtQvEPNPqSS9uRTV0WZxoHg_O7R4iuueit-23CXXBzmEjavkf/exec';
 
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       method: 'POST',
       redirect: 'follow',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ row })
+      body: JSON.stringify(type === 'clear' ? { type: 'clear' } : { row })
     });
 
     const text = await response.text();
