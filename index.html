@@ -266,7 +266,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
         <div><div class="card-title">Financials</div><div class="card-sub">Payment and cost details for this order</div></div>
       </div>
       <div class="form-grid three">
-        <div class="form-group"><label>Shipping cost</label><input type="number" id="f-shipping" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="form-group"><label>Shipping cost</label><input type="number" id="f-shipping" placeholder="0.00" step="0.01" min="0" oninput="updatePITotal()"></div>
         <div class="form-group"><label>Currency</label>
           <select id="f-currency"><option>CNY</option><option>USD</option><option>INR</option><option>EUR</option></select>
         </div>
@@ -281,6 +281,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
           <select id="f-paystatus"><option value="">— Select —</option><option>Paid</option><option>Pending</option><option>Partial</option></select>
         </div>
         <div class="form-group"><label>Proforma invoice no.</label><input type="text" id="f-pi" placeholder="PI-2026-001"></div>
+      </div>
+      <div style="margin-top:12px;background:var(--navy3);border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Total PI value (SKUs + shipping)</span>
+        <span id="pi-total-display" style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--amber)">¥0.00</span>
       </div>
     </div>
 
@@ -341,8 +345,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
         <div class="form-group">
           <label>Product images</label>
           <div class="upload-zone" onclick="document.getElementById('img-input').click()">
-            <i class="ti ti-photo"></i><p>Click to attach product photos</p><span>JPG, PNG, WEBP · multiple allowed</span>
-            <input type="file" id="img-input" accept="image/*" multiple style="display:none" onchange="handleFiles(this,'img-list','image')">
+            <i class="ti ti-photo" id="img-upload-icon"></i>
+            <p id="img-upload-label">Click to attach product photos</p>
+            <span>JPG, PNG, WEBP · uploads to Google Drive automatically</span>
+            <input type="file" id="img-input" accept="image/*" multiple style="display:none" onchange="handleImageUpload(this)">
           </div>
           <div class="file-list" id="img-list"></div>
         </div>
@@ -367,10 +373,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
   <!-- DASHBOARD -->
   <div id="tab-dashboard" class="section">
     <div class="metrics-grid" id="metrics">
-      <div class="metric-card"><div class="mlabel">Total orders</div><div class="mval">0</div><div class="msub">samples tracked</div></div>
+      <div class="metric-card"><div class="mlabel">Total PIs</div><div class="mval">0</div><div class="msub">proforma invoices</div></div>
       <div class="metric-card"><div class="mlabel">Total spend</div><div class="mval">¥0</div><div class="msub">samples + shipping</div></div>
-      <div class="metric-card"><div class="mlabel">Received</div><div class="mval">0</div><div class="msub">of 0 placed</div></div>
-      <div class="metric-card"><div class="mlabel">Approved</div><div class="mval">0</div><div class="msub">for bulk order</div></div>
+      <div class="metric-card"><div class="mlabel">Products</div><div class="mval">0</div><div class="msub">distinct product names</div></div>
+      <div class="metric-card"><div class="mlabel">Total SKUs</div><div class="mval">0</div><div class="msub">line items ordered</div></div>
     </div>
     <div class="sec-label">By team member</div>
     <div class="member-grid" id="member-grid"></div>
@@ -530,7 +536,71 @@ function showStatus(msg, type) {
   setTimeout(() => { el.className = 'status-msg'; el.style.display = ''; }, 6000);
 }
 
-// ---- MULTI-SKU ----
+// ---- IMAGE UPLOAD TO GOOGLE DRIVE ----
+let imageUrls = []; // stores {name, url} after upload
+
+async function handleImageUpload(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  const label = document.getElementById('img-upload-label');
+  const icon  = document.getElementById('img-upload-icon');
+  label.textContent = 'Uploading ' + files.length + ' image(s) to Drive…';
+  icon.className = 'ti ti-loader';
+
+  for (const file of files) {
+    try {
+      const base64Data = await fileToBase64(file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, mimeType: file.type, base64Data })
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        imageUrls.push({ name: file.name, url: data.url });
+      } else {
+        imageUrls.push({ name: file.name, url: '' });
+        console.error('Upload failed:', data.error);
+      }
+    } catch(e) {
+      imageUrls.push({ name: file.name, url: '' });
+      console.error('Upload error:', e);
+    }
+  }
+
+  label.textContent = imageUrls.length + ' image(s) uploaded to Drive';
+  icon.className = 'ti ti-circle-check';
+  renderImageList();
+}
+
+function renderImageList() {
+  document.getElementById('img-list').innerHTML = imageUrls.map((f, i) => `
+    <div class="file-item">
+      ${f.url ? `<img src="${f.url}" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0">` : '<i class="ti ti-photo" style="font-size:14px;color:var(--text3)"></i>'}
+      <span style="font-size:12px">${f.name}</span>
+      ${f.url ? `<a href="${f.url}" target="_blank" style="margin-left:auto;color:var(--text3);font-size:11px"><i class="ti ti-external-link"></i></a>` : ''}
+      <button class="remove-file" onclick="removeImage(${i})"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+}
+
+function removeImage(idx) {
+  imageUrls.splice(idx, 1);
+  renderImageList();
+  if (!imageUrls.length) {
+    document.getElementById('img-upload-label').textContent = 'Click to attach product photos';
+    document.getElementById('img-upload-icon').className = 'ti ti-photo';
+  }
+}
+function updatePITotal() {
+  const skus = getSKUs();
+  const skuTotal = skus.reduce((s, sk) => s + parseFloat(sk.amount || 0) * parseFloat(sk.qty || 1), 0);
+  const shipping = parseFloat(document.getElementById('f-shipping')?.value || 0);
+  const total = skuTotal + shipping;
+  const el = document.getElementById('pi-total-display');
+  if (el) el.textContent = '¥' + total.toFixed(2);
+}
+
 function addSKU(name = '', product = '', sku = '', qty = '', amount = '') {
   skuCount++;
   const id = skuCount;
@@ -552,11 +622,11 @@ function addSKU(name = '', product = '', sku = '', qty = '', amount = '') {
     </div>
     <div class="form-group">
       <label>Qty</label>
-      <input type="number" id="sku-qty-${id}" placeholder="1" min="1" value="${qty}">
+      <input type="number" id="sku-qty-${id}" placeholder="1" min="1" value="${qty}" oninput="updatePITotal()">
     </div>
     <div class="form-group">
       <label>Unit price (¥)</label>
-      <input type="number" id="sku-amount-${id}" placeholder="0.00" step="0.01" value="${amount}">
+      <input type="number" id="sku-amount-${id}" placeholder="0.00" step="0.01" value="${amount}" oninput="updatePITotal()">
     </div>
     ${id > 1 ? `<button type="button" class="sku-remove" onclick="removeSKU(${id})"><i class="ti ti-trash" style="font-size:15px"></i></button>` : '<div></div>'}
   `;
@@ -602,7 +672,7 @@ async function submitOrder() {
     status: getVal('f-status') || 'Order placed', eta: getVal('f-eta'),
     tracking: getVal('f-tracking'),
     notes: getVal('f-notes'), intent: getVal('f-intent'), rating: getVal('f-rating'),
-    images: uploadedFiles.images.map(f => f.name).join('; '),
+    images: imageUrls.map(f => f.url || f.name).join('; '),
     docs: uploadedFiles.docs.map(f => f.name).join('; ')
   };
 
@@ -645,11 +715,16 @@ function clearForm() {
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('img-list').innerHTML = '';
   document.getElementById('pi-list').innerHTML = '';
+  imageUrls = [];
+  document.getElementById('img-upload-label').textContent = 'Click to attach product photos';
+  document.getElementById('img-upload-icon').className = 'ti ti-photo';
   document.getElementById('nc').textContent = '0/500';
   uploadedFiles = { images: [], docs: [] };
   document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('sku-list').innerHTML = '';
   skuCount = 0; addSKU();
+  const piTotal = document.getElementById('pi-total-display');
+  if (piTotal) piTotal.textContent = '¥0.00';
   piFileData = null;
   document.getElementById('pi-fetch-label').textContent = 'Click to upload Proforma Invoice';
   document.getElementById('pi-fetch-icon').className = 'ti ti-file-upload';
@@ -660,15 +735,16 @@ function clearForm() {
 
 // ---- DASHBOARD ----
 function renderDashboard() {
-  const total = orders.length;
+  const totalSKUs = orders.length;
   const spend = orders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
-  const received = orders.filter(o => o.status === 'Received').length;
-  const approved = orders.filter(o => o.status === 'Approved').length;
+  const distinctPIs = new Set(orders.map(o => o.piNo).filter(p => p && p.trim())).size;
+  const distinctProducts = new Set(orders.map(o => o.product).filter(p => p && p.trim())).size;
+
   document.getElementById('metrics').innerHTML =
-    `<div class="metric-card"><div class="mlabel">Total orders</div><div class="mval">${total}</div><div class="msub">samples tracked</div></div>` +
+    `<div class="metric-card"><div class="mlabel">Total PIs</div><div class="mval">${distinctPIs}</div><div class="msub">proforma invoices</div></div>` +
     `<div class="metric-card"><div class="mlabel">Total spend</div><div class="mval">¥${spend.toFixed(0)}</div><div class="msub">samples + shipping</div></div>` +
-    `<div class="metric-card"><div class="mlabel">Received</div><div class="mval">${received}</div><div class="msub">of ${total} placed</div></div>` +
-    `<div class="metric-card"><div class="mlabel">Approved</div><div class="mval">${approved}</div><div class="msub">for bulk order</div></div>`;
+    `<div class="metric-card"><div class="mlabel">Products</div><div class="mval">${distinctProducts}</div><div class="msub">distinct product names</div></div>` +
+    `<div class="metric-card"><div class="mlabel">Total SKUs</div><div class="mval">${totalSKUs}</div><div class="msub">line items ordered</div></div>`;
   const members = ['Dhiraj', 'Dheeraj', 'Nitin', 'Akarsh'];
   document.getElementById('member-grid').innerHTML = members.map(m => {
     const mo = orders.filter(o => o.member === m);
@@ -753,7 +829,7 @@ function saveEdit() {
 
 // ---- GALLERY ----
 function renderGallery() {
-  const q = (document.getElementById('gallery-search').value || '').toLowerCase();
+  const q  = (document.getElementById('gallery-search').value || '').toLowerCase();
   const fb = document.getElementById('gallery-brand').value;
   const filtered = orders.filter(o => {
     const m = !q || [o.product, o.supplier, o.description].join(' ').toLowerCase().includes(q);
@@ -761,17 +837,33 @@ function renderGallery() {
   });
   const g = document.getElementById('gallery-grid');
   if (!filtered.length) { g.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-photo-off"></i><p>No products yet.</p></div>'; return; }
-  const sc = { 'Received': 'badge-received', 'Approved': 'badge-approved', 'In transit': 'badge-transit', 'Rejected': 'badge-rejected', 'Order placed': 'badge-placed' };
-  window._galleryOrders = filtered;
-  g.innerHTML = filtered.map((o, i) => {
-    const imgHtml = o.images
-      ? `<div class="gallery-img-placeholder" style="background:var(--navy4)"><i class="ti ti-photo" style="font-size:28px;color:var(--amber);opacity:0.6"></i><span style="font-size:10px;padding:0 8px;text-align:center;margin-top:4px">${o.images.split(';')[0].trim()}</span></div>`
-      : `<div class="gallery-img-placeholder"><i class="ti ti-photo-off" style="font-size:28px"></i><span style="font-size:11px">No image</span></div>`;
+
+  // Group by product name — show one card per distinct product, use first available image
+  const productMap = {};
+  filtered.forEach(o => {
+    const key = o.product || o.description || o.id;
+    if (!productMap[key]) productMap[key] = { ...o, allImages: [] };
+    // Collect all Drive image URLs for this product
+    if (o.images) {
+      o.images.split(';').map(s => s.trim()).filter(s => s.startsWith('http')).forEach(url => {
+        if (!productMap[key].allImages.includes(url)) productMap[key].allImages.push(url);
+      });
+    }
+  });
+
+  const sc = { 'Received':'badge-received','Approved':'badge-approved','In transit':'badge-transit','Rejected':'badge-rejected','Order placed':'badge-placed' };
+  window._galleryOrders = Object.values(productMap);
+
+  g.innerHTML = Object.values(productMap).map((o, i) => {
+    const imgUrl = o.allImages[0] || '';
+    const imgHtml = imgUrl
+      ? `<img src="${imgUrl}" style="width:100%;height:160px;object-fit:cover;display:block" onerror="this.parentElement.innerHTML='<div class=\\"gallery-img-placeholder\\" style=\\"height:160px\\"><i class=\\"ti ti-photo-off\\" style=\\"font-size:28px\\"></i><span style=\\"font-size:11px\\">Image unavailable</span></div>'">`
+      : `<div class="gallery-img-placeholder" style="height:160px"><i class="ti ti-photo-off" style="font-size:28px"></i><span style="font-size:11px">No image</span></div>`;
     return `<div class="gallery-card" onclick="openModal(${i})">
       ${imgHtml}
       <div class="gallery-info">
         <div class="gallery-name" title="${o.product}">${o.product}</div>
-        <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${o.description || ''}">${o.description || o.supplier || '—'}</div>
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.supplier || '—'}</div>
         <div class="gallery-price">¥${parseFloat(o.total || 0).toFixed(0)}</div>
         <div class="gallery-meta">
           <span class="badge ${sc[o.status] || 'badge-placed'}" style="font-size:10px;padding:2px 7px">${o.status || '—'}</span>
@@ -786,8 +878,9 @@ function openModal(idx) {
   const o = window._galleryOrders[idx]; if (!o) return;
   const sc = { 'Received': 'badge-received', 'Approved': 'badge-approved', 'In transit': 'badge-transit', 'Rejected': 'badge-rejected', 'Order placed': 'badge-placed' };
   const imgWrap = document.getElementById('modal-img-wrap');
-  imgWrap.innerHTML = o.images
-    ? `<div style="width:100%;height:220px;background:var(--navy3);border-radius:var(--radius-xl) var(--radius-xl) 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px"><i class="ti ti-photo" style="font-size:36px;color:var(--amber);opacity:0.6"></i><span style="font-size:13px;color:var(--text2);padding:0 2rem;text-align:center">${o.images.split(';').map(s => s.trim()).join(', ')}</span></div>`
+  const firstImg = o.allImages && o.allImages[0];
+  imgWrap.innerHTML = firstImg
+    ? `<img src="${firstImg}" style="width:100%;height:220px;object-fit:cover;border-radius:var(--radius-xl) var(--radius-xl) 0 0" onerror="this.parentElement.innerHTML='<div class=\\"modal-img-placeholder\\"><i class=\\"ti ti-photo-off\\" style=\\"font-size:36px\\"></i><span>Image unavailable</span></div>'">`
     : `<div class="modal-img-placeholder"><i class="ti ti-photo-off" style="font-size:36px"></i><span>No image attached</span></div>`;
   document.getElementById('modal-product').textContent = o.product || '—';
   document.getElementById('modal-supplier').textContent = (o.description ? o.description + ' · ' : '') + (o.supplier || '');
