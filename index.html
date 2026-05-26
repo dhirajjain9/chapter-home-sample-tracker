@@ -1100,13 +1100,24 @@ function updateFixFilesPreview() {
 async function handleFixPIUpload(input) {
   const file = input.files[0]; if (!file) return;
   document.getElementById('fix-pi-icon').className = 'ti ti-loader';
-  document.getElementById('fix-pi-label').textContent = 'Uploading…';
+  // Check file size — warn if over 5MB
+  if (file.size > 5 * 1024 * 1024) {
+    document.getElementById('fix-pi-icon').className = 'ti ti-alert-circle';
+    document.getElementById('fix-pi-label').textContent = 'File too large (max 5MB)';
+    return;
+  }
+  document.getElementById('fix-pi-label').textContent = 'Uploading ' + (file.size/1024).toFixed(0) + 'KB…';
   try {
     const base64Data = await fileToBase64(file);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
     const res = await fetch('/api/upload', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({ type: 'pi_upload', fileName: file.name, mimeType: file.type || 'application/octet-stream', base64Data })
     });
+    clearTimeout(timeout);
     const data = await res.json();
     if (data.success && data.url) {
       fixPIUrl = data.url;
@@ -1115,7 +1126,8 @@ async function handleFixPIUpload(input) {
     } else throw new Error(data.error || 'Upload failed');
   } catch(e) {
     document.getElementById('fix-pi-icon').className = 'ti ti-alert-circle';
-    document.getElementById('fix-pi-label').textContent = 'Upload failed — try again';
+    document.getElementById('fix-pi-label').textContent = e.name === 'AbortError' ? 'Timed out — try again' : 'Upload failed: ' + e.message;
+    console.error('PI upload error:', e);
   }
 }
 
