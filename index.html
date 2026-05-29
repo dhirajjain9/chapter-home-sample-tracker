@@ -1632,7 +1632,14 @@ async function saveFixFiles() {
   let updated = 0;
   for (const o of rows) {
     if (fixPIUrl) o.docs = fixPIUrl;
-    if (fixImgUrl) o.images = fixImgUrl;
+    if (fixImgUrl) {
+      // Append to next empty image slot (up to 5), don't replace existing
+      const existing = o.images ? o.images.split(';').map(s => s.trim()).filter(Boolean) : [];
+      if (!existing.includes(fixImgUrl)) {
+        existing.push(fixImgUrl);
+      }
+      o.images = existing.slice(0, 5).join('; ');
+    }
     await updateInSheet(o);
     updated++;
     await new Promise(r => setTimeout(r, 400));
