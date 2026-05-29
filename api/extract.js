@@ -20,13 +20,20 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 2000,
+        max_tokens: 16000,
         messages: [{ role: 'user', content: contentParts }]
       })
     });
 
     const data = await response.json();
     if (!response.ok) return res.status(response.status).json({ error: data.error?.message || 'API error' });
+
+    // Guard against a truncated response (e.g. very long PI with many line items)
+    // so the client gets a clear message instead of a cryptic JSON.parse error.
+    if (data.stop_reason === 'max_tokens') {
+      return res.status(502).json({ error: 'The PI was too long to extract in one pass. Please try again or split the invoice.' });
+    }
+
     return res.status(200).json(data);
   } catch (e) {
     return res.status(500).json({ error: e.message });

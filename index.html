@@ -2138,7 +2138,16 @@ async function fetchFromPI() {
     if (!res.ok) throw new Error(data.error || 'API error ' + res.status);
     const raw = data.content?.map(c => c.text || '').join('') || '';
     if (!raw) throw new Error('Empty response from server');
-    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    const cleaned = raw.replace(/```json|```/g, '').trim();
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (parseErr) {
+      // Fall back to grabbing the outermost JSON object if Claude added stray text
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('Could not read extracted data — the PI may be too long or unclear. Please try again.');
+      parsed = JSON.parse(match[0]);
+    }
 
     setVal('f-supplier', parsed.supplier_name); setVal('f-contact', parsed.contact_person);
     setVal('f-channel', parsed.order_channel); setVal('f-link', parsed.alibaba_link);
