@@ -284,6 +284,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
     <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-layout-dashboard" style="font-size:14px"></i> Dashboard</button>
     <button class="tab" onclick="switchTab('orders')"><i class="ti ti-list-details" style="font-size:14px"></i> All orders</button>
     <button class="tab" onclick="switchTab('gallery')"><i class="ti ti-layout-grid" style="font-size:14px"></i> Product gallery</button>
+    <button class="tab" onclick="switchTab('recover')"><i class="ti ti-photo-search" style="font-size:14px"></i> Recover images</button>
   </div>
 
   <!-- LOG ORDER -->
@@ -508,6 +509,91 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
       </select>
     </div>
     <div id="gallery-grid" class="gallery-grid"></div>
+  </div>
+
+  <!-- RECOVER IMAGES -->
+  <div id="tab-recover" class="section">
+    <div class="card" style="animation-delay:0.02s">
+      <div class="card-header">
+        <div class="card-icon purple"><i class="ti ti-photo-search"></i></div>
+        <div>
+          <div class="card-title">Recover Drive Images</div>
+          <div class="card-sub">Scan the Drive folder and match images back to sheet rows</div>
+        </div>
+        <button class="btn btn-primary" onclick="loadDriveFiles()" id="recover-scan-btn" style="margin-left:auto">
+          <i class="ti ti-refresh" style="font-size:13px"></i> Scan Drive folder
+        </button>
+      </div>
+      <div id="recover-status" class="status-msg"></div>
+    </div>
+
+    <!-- Stats bar -->
+    <div id="recover-stats" style="display:none;margin-bottom:1rem">
+      <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="metric-card">
+          <div class="mlabel">Total in Drive</div>
+          <div class="mval" id="rs-total">—</div>
+        </div>
+        <div class="metric-card" style="border-color:#b8cdb5">
+          <div class="mlabel">Already linked</div>
+          <div class="mval" id="rs-linked" style="color:var(--sage)">—</div>
+        </div>
+        <div class="metric-card warm">
+          <div class="mlabel">Unlinked (need recovery)</div>
+          <div class="mval" id="rs-unlinked">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unlinked files -->
+    <div id="recover-unlinked-wrap" style="display:none">
+      <div class="sec-label">Unlinked images — <em>assign to a row</em></div>
+      <div id="recover-unlinked-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--gap)"></div>
+    </div>
+
+    <!-- Already linked files -->
+    <div id="recover-linked-wrap" style="display:none;margin-top:1.5rem">
+      <div class="sec-label" style="color:var(--muted)">Already linked images</div>
+      <div id="recover-linked-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--gap)"></div>
+    </div>
+  </div>
+
+  <!-- ASSIGN IMAGE MODAL -->
+  <div id="assign-modal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-box" style="max-width:500px">
+      <button class="modal-close" onclick="document.getElementById('assign-modal').style.display='none'"><i class="ti ti-x"></i></button>
+      <div class="modal-body">
+        <div style="margin-bottom:1rem">
+          <img id="assign-preview" src="" style="width:100%;max-height:220px;object-fit:contain;background:var(--bg);border-radius:var(--radius-sm);padding:10px;display:block">
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px">File name</div>
+        <div id="assign-filename" style="font-size:13px;color:var(--ink2);margin-bottom:1.25rem;word-break:break-all"></div>
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="required">Assign to order</label>
+          <select id="assign-order-select">
+            <option value="">— Select an order —</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:1.5rem">
+          <label>Image slot</label>
+          <select id="assign-slot-select">
+            <option value="display">Display Image (col 30)</option>
+            <option value="img2">Image 2 (col 31)</option>
+            <option value="img3">Image 3 (col 32)</option>
+            <option value="img4">Image 4 (col 33)</option>
+            <option value="img5">Image 5 (col 34)</option>
+          </select>
+        </div>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn btn-secondary" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
+          <button class="btn btn-primary" id="assign-save-btn" onclick="saveImageAssignment()">
+            <i class="ti ti-link" style="font-size:13px"></i> Link to row
+          </button>
+        </div>
+        <div id="assign-status" class="status-msg" style="margin-top:0.75rem"></div>
+      </div>
+    </div>
   </div>
 
   <!-- PRODUCT MODAL -->
@@ -740,7 +826,7 @@ async function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  const map = { log: 0, dashboard: 1, orders: 2, gallery: 3 };
+  const map = { log: 0, dashboard: 1, orders: 2, gallery: 3, recover: 4 };
   document.querySelectorAll('.tab')[map[name]].classList.add('active');
   if (name !== 'log') {
     try { await syncFromSheet(); } catch(e) { console.error('Sync failed:', e); }
@@ -2057,6 +2143,156 @@ function fileToBase64(file) {
     r.onerror = rej;
     r.readAsDataURL(file);
   });
+}
+
+// ---- RECOVER IMAGES ----
+let _recoverDriveFiles = [];
+let _assignFileId = '';
+
+async function loadDriveFiles() {
+  const btn = document.getElementById('recover-scan-btn');
+  const statusEl = document.getElementById('recover-status');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2 ti-spin" style="font-size:13px"></i> Scanning…';
+  statusEl.className = 'status-msg';
+  statusEl.style.display = 'none';
+
+  try {
+    // Refresh orders so we have latest image links
+    await syncFromSheet();
+
+    const res = await fetch('/api/recover');
+    const data = await res.json();
+
+    if (!data.success || !Array.isArray(data.files)) {
+      throw new Error(data.error || data.raw || 'Unexpected response from Apps Script');
+    }
+
+    _recoverDriveFiles = data.files; // [{id, name, mimeType, createdTime}]
+
+    // Build set of file IDs already linked in any order
+    const linkedIds = new Set();
+    orders.forEach(o => {
+      const allUrls = [o.images || '', o.docs || ''].join(';');
+      const matches = allUrls.matchAll(/id=([a-zA-Z0-9_-]+)/g);
+      for (const m of matches) linkedIds.add(m[1]);
+    });
+
+    const unlinked = _recoverDriveFiles.filter(f => !linkedIds.has(f.id));
+    const linked   = _recoverDriveFiles.filter(f =>  linkedIds.has(f.id));
+
+    document.getElementById('rs-total').textContent   = _recoverDriveFiles.length;
+    document.getElementById('rs-linked').textContent  = linked.length;
+    document.getElementById('rs-unlinked').textContent = unlinked.length;
+    document.getElementById('recover-stats').style.display = '';
+
+    _renderRecoverGrid('recover-unlinked-grid', unlinked, true);
+    _renderRecoverGrid('recover-linked-grid',   linked,   false);
+    document.getElementById('recover-unlinked-wrap').style.display = unlinked.length ? '' : 'none';
+    document.getElementById('recover-linked-wrap').style.display   = linked.length  ? '' : 'none';
+
+    if (unlinked.length === 0) {
+      statusEl.className = 'status-msg status-success';
+      statusEl.innerHTML = '<i class="ti ti-circle-check"></i> All Drive images are already linked to sheet rows.';
+      statusEl.style.display = 'flex';
+    }
+  } catch(e) {
+    statusEl.className = 'status-msg status-error';
+    statusEl.innerHTML = '<i class="ti ti-alert-circle"></i> ' + e.message;
+    statusEl.style.display = 'flex';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-refresh" style="font-size:13px"></i> Scan Drive folder';
+}
+
+function _renderRecoverGrid(containerId, files, showAssignBtn) {
+  const grid = document.getElementById(containerId);
+  if (!files.length) { grid.innerHTML = ''; return; }
+
+  // Build a quick lookup: fileId → order name + id
+  const idToOrder = {};
+  orders.forEach(o => {
+    const allUrls = [o.images || '', o.docs || ''].join(';');
+    const matches = allUrls.matchAll(/id=([a-zA-Z0-9_-]+)/g);
+    for (const m of matches) {
+      if (!idToOrder[m[1]]) idToOrder[m[1]] = { id: o.id, product: o.product || o.id };
+    }
+  });
+
+  grid.innerHTML = files.map(f => {
+    const thumb = 'https://drive.google.com/thumbnail?id=' + f.id + '&sz=w300';
+    const orderInfo = idToOrder[f.id]
+      ? `<div style="font-size:10px;color:var(--sage);margin-top:4px"><i class="ti ti-link" style="font-size:10px;vertical-align:middle"></i> ${idToOrder[f.id].product}</div>`
+      : '';
+    const assignBtn = showAssignBtn
+      ? `<button class="btn btn-primary" style="width:100%;margin-top:10px;font-size:12px;justify-content:center" onclick="openAssignModal('${f.id}','${(f.name||'').replace(/'/g,"\\'")}')"><i class="ti ti-link" style="font-size:12px"></i> Assign to row</button>`
+      : '';
+    return `<div class="gallery-card" style="cursor:default">
+      <img src="${thumb}" style="width:100%;height:160px;object-fit:contain;background:var(--bg);padding:8px;display:block"
+           onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=gallery-img-placeholder style=height:160px><i class=ti-ti-photo-off style=font-size:24px></i></div>')">
+      <div class="gallery-info" style="padding:10px 12px">
+        <div style="font-size:12px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${(f.name||'').replace(/"/g,'&quot;')}">${f.name || f.id}</div>
+        ${orderInfo}
+        ${assignBtn}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAssignModal(fileId, fileName) {
+  _assignFileId = fileId;
+  document.getElementById('assign-preview').src = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w600';
+  document.getElementById('assign-filename').textContent = fileName;
+
+  // Populate order dropdown
+  const sel = document.getElementById('assign-order-select');
+  sel.innerHTML = '<option value="">— Select an order —</option>' +
+    orders.map(o => `<option value="${o.id}">${o.product || o.id} · ${o.supplier || ''} (${o.id})</option>`).join('');
+
+  document.getElementById('assign-status').style.display = 'none';
+  document.getElementById('assign-save-btn').disabled = false;
+  document.getElementById('assign-modal').style.display = 'flex';
+}
+
+async function saveImageAssignment() {
+  const orderId = document.getElementById('assign-order-select').value;
+  const slot    = document.getElementById('assign-slot-select').value;
+  const statusEl = document.getElementById('assign-status');
+  if (!orderId) {
+    statusEl.className = 'status-msg status-error';
+    statusEl.innerHTML = '<i class="ti ti-alert-circle"></i> Please select an order.';
+    statusEl.style.display = 'flex';
+    return;
+  }
+
+  const btn = document.getElementById('assign-save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2 ti-spin" style="font-size:13px"></i> Linking…';
+
+  try {
+    const res = await fetch('/api/recover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, fileId: _assignFileId, slot })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to link image');
+
+    statusEl.className = 'status-msg status-success';
+    statusEl.innerHTML = '<i class="ti ti-circle-check"></i> Image linked successfully! Rescanning…';
+    statusEl.style.display = 'flex';
+    setTimeout(() => {
+      document.getElementById('assign-modal').style.display = 'none';
+      loadDriveFiles();
+    }, 1200);
+  } catch(e) {
+    statusEl.className = 'status-msg status-error';
+    statusEl.innerHTML = '<i class="ti ti-alert-circle"></i> ' + e.message;
+    statusEl.style.display = 'flex';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-link" style="font-size:13px"></i> Link to row';
+  }
 }
 
 // ---- INIT ----
