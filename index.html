@@ -1232,74 +1232,100 @@ async function submitOrder() {
   if (!skus.length) { showStatus('Please add at least one product / SKU', 'error'); return; }
 
   const btn = document.getElementById('save-btn');
+  const resetBtn = () => { btn.innerHTML = '<i class="ti ti-send" style="font-size:13px"></i> Save to Google Sheet'; btn.disabled = false; };
   btn.innerHTML = '<i class="ti ti-loader" style="font-size:13px"></i> Saving…'; btn.disabled = true;
 
-  // Wait up to 10s for any pending PI upload to finish
-  if (document.getElementById('pi-upload-icon')?.className?.includes('loader')) {
-    showStatus('Waiting for PI upload to complete…', 'error');
-    let waited = 0;
-    while (document.getElementById('pi-upload-icon')?.className?.includes('loader') && waited < 10000) {
-      await new Promise(r => setTimeout(r, 500));
-      waited += 500;
+  try {
+    // Wait up to 10s for any pending PI upload to finish
+    if (document.getElementById('pi-upload-icon')?.className?.includes('loader')) {
+      showStatus('Waiting for PI upload to complete…', 'error');
+      let waited = 0;
+      while (document.getElementById('pi-upload-icon')?.className?.includes('loader') && waited < 10000) {
+        await new Promise(r => setTimeout(r, 500));
+        waited += 500;
+      }
     }
-  }
 
-  const base = {
-    loggedAt: todayFormatted(),
-    date: formatDate(getVal('f-date')), member: getVal('f-member'),
-    supplier: getVal('f-supplier'), contact: getVal('f-contact'),
-    channel: getVal('f-channel'), link: getVal('f-link'),
-    brand: getVal('f-brand'), material: getVal('f-material'), moq: getVal('f-moq'),
-    currency: getVal('f-currency') || 'CNY',
-    shipping: getVal('f-shipping') || '0',
-    payment: getVal('f-payment'), payStatus: getVal('f-paystatus'), piNo: getVal('f-pi'),
-    status: getVal('f-status') || 'Order placed', eta: getVal('f-eta'),
-    tracking: getVal('f-tracking'),
-    notes: getVal('f-notes'), intent: getVal('f-intent'), rating: getVal('f-rating'),
-    // images assigned per-SKU below
-    docs: piDocUrls.map(f => f.url || f.name).join('; ')
-  };
-
-  for (const s of skus) {
-    // Resolve image source: direct upload or linked to another SKU with same product name
-    const imgSource = skuImageUrls[s._skuId];
-    const resolvedImgs = (imgSource?._linkedTo)
-      ? (skuImageUrls[imgSource._linkedTo] || [])
-      : (imgSource || []);
-    const skuImgs = resolvedImgs.map(f => f.url || f.name).filter(u => u);
-    const row = {
-      ...base,
-      id: 'SO-' + Date.now().toString().slice(-6),
-      product: s.name || s.product,
-      description: s.product,
-      sku: s.sku, qty: s.qty || '1',
-      amount: s.amount || '0',
-      bulkPrice: s.bulkPrice || '',
-      images: skuImgs.join('; '),
-      total: toCNY((parseFloat(s.amount || 0) * parseFloat(s.qty || 1)) + parseFloat(base.shipping) / skus.length, base.currency).toFixed(2)
+    const base = {
+      loggedAt: todayFormatted(),
+      date: formatDate(getVal('f-date')), member: getVal('f-member'),
+      supplier: getVal('f-supplier'), contact: getVal('f-contact'),
+      channel: getVal('f-channel'), link: getVal('f-link'),
+      brand: getVal('f-brand'), material: getVal('f-material'), moq: getVal('f-moq'),
+      currency: getVal('f-currency') || 'CNY',
+      shipping: getVal('f-shipping') || '0',
+      payment: getVal('f-payment'), payStatus: getVal('f-paystatus'), piNo: getVal('f-pi'),
+      status: getVal('f-status') || 'Order placed', eta: getVal('f-eta'),
+      tracking: getVal('f-tracking'),
+      notes: getVal('f-notes'), intent: getVal('f-intent'), rating: getVal('f-rating'),
+      // images assigned per-SKU below
+      docs: piDocUrls.map(f => f.url || f.name).join('; ')
     };
-    orders.push(row);
-    await pushToSheet(row);
-    await new Promise(r => setTimeout(r, 300));
-  }
 
-  localStorage.setItem('ch_sample_orders', JSON.stringify(orders));
-  btn.innerHTML = '<i class="ti ti-send" style="font-size:13px"></i> Save to Google Sheet'; btn.disabled = false;
-  showStatus('✓ ' + skus.length + ' SKU(s) saved!', 'success');
-  clearForm();
+    let saved = 0;
+    const failed = [];
+    for (let i = 0; i < skus.length; i++) {
+      const s = skus[i];
+      // Show progress so multi-line PIs don't look frozen
+      btn.innerHTML = `<i class="ti ti-loader" style="font-size:13px"></i> Saving ${i + 1}/${skus.length}…`;
+      showStatus(`Saving ${i + 1} of ${skus.length}…`, 'success');
+
+      // Resolve image source: direct upload or linked to another SKU with same product name
+      const imgSource = skuImageUrls[s._skuId];
+      const resolvedImgs = (imgSource?._linkedTo)
+        ? (skuImageUrls[imgSource._linkedTo] || [])
+        : (imgSource || []);
+      const skuImgs = resolvedImgs.map(f => f.url || f.name).filter(u => u);
+      const row = {
+        ...base,
+        id: 'SO-' + Date.now().toString().slice(-6) + '-' + i,
+        product: s.name || s.product,
+        description: s.product,
+        sku: s.sku, qty: s.qty || '1',
+        amount: s.amount || '0',
+        bulkPrice: s.bulkPrice || '',
+        images: skuImgs.join('; '),
+        total: toCNY((parseFloat(s.amount || 0) * parseFloat(s.qty || 1)) + parseFloat(base.shipping) / skus.length, base.currency).toFixed(2)
+      };
+      const ok = await pushToSheet(row);
+      if (ok) { orders.push(row); saved++; }
+      else { failed.push(s.name || s.product || ('item ' + (i + 1))); }
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    localStorage.setItem('ch_sample_orders', JSON.stringify(orders));
+
+    if (failed.length === 0) {
+      showStatus('✓ ' + saved + ' SKU(s) saved!', 'success');
+      clearForm();
+    } else if (saved > 0) {
+      showStatus(`Saved ${saved} of ${skus.length}. Failed: ${failed.join(', ')}. Please save again to retry the rest.`, 'error');
+    } else {
+      showStatus('Could not save to Google Sheet — please check your connection and try again.', 'error');
+    }
+  } catch (e) {
+    console.error('Save error:', e);
+    showStatus('Save failed: ' + (e.message || 'unknown error') + '. Please try again.', 'error');
+  } finally {
+    resetBtn();
+  }
 }
 
 async function pushToSheet(row) {
   const rowArr = [row.id, row.loggedAt, row.date, row.member, row.supplier, row.contact, row.channel, row.link, row.product, row.description, row.brand, row.qty, row.sku, row.material, row.moq, row.currency, row.amount, row.bulkPrice || '', row.shipping, row.total, row.payment, row.payStatus, row.piNo, row.status, row.eta, row.tracking, row.notes, row.intent, row.rating, row.images, row.docs];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
   try {
     const res = await fetch('/api/sheet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ row: rowArr })
+      body: JSON.stringify({ row: rowArr }),
+      signal: controller.signal
     });
     const data = await res.json();
     return data.success === true;
   } catch (e) { console.error('Sheet error:', e); return false; }
+  finally { clearTimeout(timer); }
 }
 
 async function updateInSheet(row) {
