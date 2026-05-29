@@ -187,7 +187,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
 .pi-total-cny{font-size:11px;color:var(--muted);margin-top:3px}
 
 /* ── GALLERY ── */
-.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap)}
+.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap)}.gallery-grid:has(>[style*="grid-column"]){display:block;}
 .gallery-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:box-shadow 180ms,transform 180ms}
 .gallery-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(58,40,22,.08)}
 .gallery-info{padding:14px}
@@ -1704,9 +1704,10 @@ function renderGallery() {
   });
 
   const sc = { 'Received':'badge-received','Approved':'badge-approved','In transit':'badge-transit','Rejected':'badge-rejected','Order placed':'badge-placed' };
-  window._galleryOrders = Object.values(productMap);
+  const allProducts = Object.values(productMap);
+  window._galleryOrders = allProducts;
 
-  g.innerHTML = Object.values(productMap).map((o, i) => {
+  function cardHtml(o, i) {
     const imgUrl = o.allImages[0] ? driveImgUrl(o.allImages[0]) : '';
     const imgHtml = imgUrl
       ? `<img src="${imgUrl}" style="width:100%;height:180px;object-fit:contain;background:var(--bg);display:block;padding:8px" onerror="this.style.display='none';this.parentElement.innerHTML+='<div class=gallery-img-placeholder style=height:180px><i class=ti-ti-photo-off style=font-size:28px></i><span style=font-size:11px>No image</span></div>'">`
@@ -1723,7 +1724,46 @@ function renderGallery() {
         ${o.piNos && o.piNos.size > 0 ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">${o.piNos.size} PI${o.piNos.size > 1 ? 's' : ''}</div>` : ''}
       </div>
     </div>`;
-  }).join('');
+  }
+
+  // If filtering by a specific brand or searching, render flat (no section headers)
+  if (fb || q) {
+    g.innerHTML = allProducts.map((o, i) => cardHtml(o, i)).join('');
+    return;
+  }
+
+  // Group into sections by brand
+  const BRAND_ORDER = ['Everyday Essentials', 'Small Appliances'];
+  const grouped = {};
+  allProducts.forEach((o, i) => {
+    const brand = o.brand || 'Other';
+    if (!grouped[brand]) grouped[brand] = [];
+    grouped[brand].push({ o, i });
+  });
+
+  // Sort brands: known order first, then alphabetical
+  const brandKeys = Object.keys(grouped).sort((a, b) => {
+    const ai = BRAND_ORDER.indexOf(a), bi = BRAND_ORDER.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.localeCompare(b);
+  });
+
+  const sections = brandKeys.map(brand => {
+    const cards = grouped[brand].map(({ o, i }) => cardHtml(o, i)).join('');
+    const icon = brand === 'Everyday Essentials' ? 'ti-home' : brand === 'Small Appliances' ? 'ti-plug' : 'ti-tag';
+    return `<div style="grid-column:1/-1;margin-top:0.5rem">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--line)">
+        <div class="card-icon amber" style="width:28px;height:28px;font-size:13px"><i class="ti ${icon}"></i></div>
+        <span style="font-family:var(--serif);font-size:18px;font-weight:500;color:var(--ink)">${brand}</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:2px">${grouped[brand].length} product${grouped[brand].length > 1 ? 's' : ''}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap)">${cards}</div>
+    </div>`;
+  });
+
+  g.innerHTML = sections.join('');
 }
 
 // Central carousel state — keyed by carousel id
