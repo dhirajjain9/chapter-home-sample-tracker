@@ -1205,6 +1205,21 @@ function removeSKUImage(skuId, idx) {
   }
 }
 function removeSKU(id) { const el = document.getElementById('sku-row-' + id); if (el) el.remove(); delete skuImageUrls[id]; }
+
+// Resolve a SKU's images to an array, following _linkedTo markers. Duplicate-named
+// SKUs link to an earlier row, and those links can chain (C->B->A), so walk the
+// chain (with a guard) until we reach a real array. Always returns an array.
+function resolveSkuImages(skuId) {
+  let entry = skuImageUrls[skuId];
+  let hops = 0;
+  const seen = new Set();
+  while (entry && entry._linkedTo != null && !seen.has(entry._linkedTo) && hops < 50) {
+    seen.add(entry._linkedTo);
+    entry = skuImageUrls[entry._linkedTo];
+    hops++;
+  }
+  return Array.isArray(entry) ? entry : [];
+}
 function getSKUs() {
   return Array.from(document.querySelectorAll('[id^="sku-row-"]')).map(r => {
     const id = r.id.replace('sku-row-', '');
@@ -1270,12 +1285,10 @@ async function submitOrder() {
       btn.innerHTML = `<i class="ti ti-loader" style="font-size:13px"></i> Saving ${i + 1}/${skus.length}…`;
       showStatus(`Saving ${i + 1} of ${skus.length}…`, 'success');
 
-      // Resolve image source: direct upload or linked to another SKU with same product name
-      const imgSource = skuImageUrls[s._skuId];
-      const resolvedImgs = (imgSource?._linkedTo)
-        ? (skuImageUrls[imgSource._linkedTo] || [])
-        : (imgSource || []);
-      const skuImgs = resolvedImgs.map(f => f.url || f.name).filter(u => u);
+      // Resolve image source: direct upload or linked (possibly chained) to
+      // another SKU with the same product name. resolveSkuImages always
+      // returns an array, even for multi-hop links.
+      const skuImgs = resolveSkuImages(s._skuId).map(f => f.url || f.name).filter(u => u);
       const row = {
         ...base,
         id: 'SO-' + Date.now().toString().slice(-6) + '-' + i,
