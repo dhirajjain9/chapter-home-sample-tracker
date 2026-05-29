@@ -18,11 +18,28 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      // Link a Drive file to a sheet row: { orderId, fileId, slot }
-      // slot = 'display' | 'img2' | 'img3' | 'img4' | 'img5'
-      const { orderId, fileId, slot } = req.body;
-      if (!orderId || !fileId) return res.status(400).json({ error: 'Missing orderId or fileId' });
+      const body = req.body;
 
+      // Delete unlinked files: { type: 'deleteFiles', fileIds: [...] }
+      if (body.type === 'deleteFiles') {
+        const { fileIds } = body;
+        if (!Array.isArray(fileIds) || fileIds.length === 0)
+          return res.status(400).json({ error: 'Missing fileIds array' });
+        const r = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ type: 'deleteFiles', fileIds })
+        });
+        const text = await r.text();
+        let data;
+        try { data = JSON.parse(text); } catch(e) { data = { success: false, raw: text.slice(0, 200) }; }
+        return res.status(200).json(data);
+      }
+
+      // Link a Drive file to a sheet row: { orderId, fileId, slot }
+      const { orderId, fileId, slot } = body;
+      if (!orderId || !fileId) return res.status(400).json({ error: 'Missing orderId or fileId' });
       const r = await fetch(SCRIPT_URL, {
         method: 'POST',
         redirect: 'follow',

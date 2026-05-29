@@ -284,7 +284,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
     <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-layout-dashboard" style="font-size:14px"></i> Dashboard</button>
     <button class="tab" onclick="switchTab('orders')"><i class="ti ti-list-details" style="font-size:14px"></i> All orders</button>
     <button class="tab" onclick="switchTab('gallery')"><i class="ti ti-layout-grid" style="font-size:14px"></i> Product gallery</button>
-    <button class="tab" onclick="switchTab('recover')"><i class="ti ti-photo-search" style="font-size:14px"></i> Recover images</button>
   </div>
 
   <!-- LOG ORDER -->
@@ -520,9 +519,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
           <div class="card-title">Recover Drive Images</div>
           <div class="card-sub">Scan the Drive folder and match images back to sheet rows</div>
         </div>
-        <button class="btn btn-primary" onclick="loadDriveFiles()" id="recover-scan-btn" style="margin-left:auto">
-          <i class="ti ti-refresh" style="font-size:13px"></i> Scan Drive folder
-        </button>
+        <div style="display:flex;gap:8px;margin-left:auto">
+          <button class="btn btn-danger" onclick="discardUnlinked()" id="recover-discard-btn" style="display:none">
+            <i class="ti ti-trash" style="font-size:13px"></i> Discard unlinked
+          </button>
+          <button class="btn btn-primary" onclick="loadDriveFiles()" id="recover-scan-btn">
+            <i class="ti ti-refresh" style="font-size:13px"></i> Scan Drive folder
+          </button>
+        </div>
       </div>
       <div id="recover-status" class="status-msg"></div>
     </div>
@@ -826,7 +830,7 @@ async function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  const map = { log: 0, dashboard: 1, orders: 2, gallery: 3, recover: 4 };
+  const map = { log: 0, dashboard: 1, orders: 2, gallery: 3 };
   document.querySelectorAll('.tab')[map[name]].classList.add('active');
   if (name !== 'log') {
     try { await syncFromSheet(); } catch(e) { console.error('Sync failed:', e); }
@@ -2190,6 +2194,7 @@ async function loadDriveFiles() {
     _renderRecoverGrid('recover-linked-grid',   linked,   false);
     document.getElementById('recover-unlinked-wrap').style.display = unlinked.length ? '' : 'none';
     document.getElementById('recover-linked-wrap').style.display   = linked.length  ? '' : 'none';
+    document.getElementById('recover-discard-btn').style.display   = unlinked.length ? '' : 'none';
 
     if (unlinked.length === 0) {
       statusEl.className = 'status-msg status-success';
@@ -2253,6 +2258,46 @@ function openAssignModal(fileId, fileName) {
   document.getElementById('assign-status').style.display = 'none';
   document.getElementById('assign-save-btn').disabled = false;
   document.getElementById('assign-modal').style.display = 'flex';
+}
+
+async function discardUnlinked() {
+  const linkedIds = new Set();
+  orders.forEach(o => {
+    const allUrls = [o.images || '', o.docs || ''].join(';');
+    const matches = allUrls.matchAll(/id=([a-zA-Z0-9_-]+)/g);
+    for (const m of matches) linkedIds.add(m[1]);
+  });
+  const unlinked = _recoverDriveFiles.filter(f => !linkedIds.has(f.id));
+  if (!unlinked.length) return;
+
+  if (!confirm(`Move ${unlinked.length} unlinked file(s) to Drive trash? This cannot be undone easily.`)) return;
+
+  const btn = document.getElementById('recover-discard-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2 ti-spin" style="font-size:13px"></i> Discarding…';
+
+  const statusEl = document.getElementById('recover-status');
+  try {
+    const res = await fetch('/api/recover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'deleteFiles', fileIds: unlinked.map(f => f.id) })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to delete files');
+
+    statusEl.className = 'status-msg status-success';
+    statusEl.innerHTML = `<i class="ti ti-circle-check"></i> ${data.deleted.length} file(s) moved to trash.${data.errors.length ? ' ' + data.errors.length + ' failed.' : ''}`;
+    statusEl.style.display = 'flex';
+    btn.style.display = 'none';
+    await loadDriveFiles();
+  } catch(e) {
+    statusEl.className = 'status-msg status-error';
+    statusEl.innerHTML = '<i class="ti ti-alert-circle"></i> ' + e.message;
+    statusEl.style.display = 'flex';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-trash" style="font-size:13px"></i> Discard unlinked';
+  }
 }
 
 async function saveImageAssignment() {
