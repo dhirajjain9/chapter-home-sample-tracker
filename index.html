@@ -1091,20 +1091,25 @@ function refreshSKUImageZone(skuId, productName) {
     zone.style.display = 'flex';
     icon.className = 'ti ti-upload';
     label.innerHTML = 'Click to attach images for <strong>this product</strong>';
-    skuImageUrls[skuId] = skuImageUrls[skuId] || [];
-    delete skuImageUrls[skuId]._linkedTo;
+    const infoStrip = document.getElementById('sku-img-info-' + skuId);
+    if (infoStrip) infoStrip.remove();
+    // Was possibly a link marker — reset to a real array so later .map/.push work
+    if (!Array.isArray(skuImageUrls[skuId])) skuImageUrls[skuId] = [];
     renderSKUImageList(skuId);
     return;
   }
 
   const nameLower = productName.toLowerCase();
 
-  // Find another SKU row with the same product name that isn't this one
+  // Find an EARLIER SKU row with the same product name. Linking only to an
+  // earlier row makes the first occurrence the stable "owner" of the images;
+  // later duplicates point straight at it. This prevents link cycles (A<->B)
+  // and chains (C->B->A) that would lose images or break saving.
   const allRows = Array.from(document.querySelectorAll('[id^="sku-row-"]'));
   let linkedId = null;
   for (const row of allRows) {
     const otherId = row.id.replace('sku-row-', '');
-    if (otherId === String(skuId)) continue;
+    if (otherId === String(skuId)) break; // reached this row — stop (only earlier rows count)
     const otherName = document.getElementById('sku-name-' + otherId)?.value?.trim()?.toLowerCase() || '';
     if (otherName === nameLower) {
       linkedId = otherId;
@@ -1139,7 +1144,7 @@ function refreshSKUImageZone(skuId, productName) {
       if (listEl) listEl.innerHTML = '';
     } else {
       // Normal case — just update the label
-      skuImageUrls[skuId] = skuImageUrls[skuId] || [];
+      if (!Array.isArray(skuImageUrls[skuId])) skuImageUrls[skuId] = [];
       const count = skuImageUrls[skuId].length || 0;
       label.innerHTML = count > 0
         ? count + ' image(s) ready for <strong>' + productName + '</strong>'
@@ -1156,6 +1161,9 @@ async function handleSKUImageUpload(input, skuId) {
   const nameVal = document.getElementById('sku-name-' + skuId)?.value?.trim() || 'this product';
   icon.className = 'ti ti-loader';
   label.innerHTML = 'Uploading ' + files.length + ' image(s)…';
+
+  // Uploading here makes this row an image owner — ensure a real array
+  if (!Array.isArray(skuImageUrls[skuId])) skuImageUrls[skuId] = [];
 
   for (const file of files) {
     try {
@@ -1184,7 +1192,8 @@ async function handleSKUImageUpload(input, skuId) {
 function renderSKUImageList(skuId) {
   const list = document.getElementById('sku-img-list-' + skuId);
   if (!list) return;
-  list.innerHTML = (skuImageUrls[skuId] || []).map((f, i) => `
+  const imgs = Array.isArray(skuImageUrls[skuId]) ? skuImageUrls[skuId] : [];
+  list.innerHTML = imgs.map((f, i) => `
     <div class="file-item">
       ${f.url ? `<img src="${driveImgUrl(f.url)}" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0">` : '<i class="ti ti-photo" style="font-size:14px;color:var(--muted)"></i>'}
       <span style="font-size:12px">${f.name}</span>
@@ -1194,6 +1203,7 @@ function renderSKUImageList(skuId) {
 }
 
 function removeSKUImage(skuId, idx) {
+  if (!Array.isArray(skuImageUrls[skuId])) skuImageUrls[skuId] = [];
   skuImageUrls[skuId].splice(idx, 1);
   renderSKUImageList(skuId);
   const label = document.getElementById('sku-img-label-' + skuId);
