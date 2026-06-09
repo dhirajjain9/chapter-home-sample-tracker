@@ -293,7 +293,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
     <div class="card" style="animation-delay:0.02s;border-color:rgba(232,168,76,0.3)">
       <div class="card-header">
         <div class="card-icon amber"><i class="ti ti-file-invoice"></i></div>
-        <div><div class="card-title">Auto-fill from Proforma Invoice</div><div class="card-sub">Upload a PI and Claude extracts all details automatically · PDF, Excel, Image</div></div>
+        <div><div class="card-title">Auto-fill from Proforma Invoice</div><div class="card-sub">Upload a PI and AI extracts all details automatically · PDF, Excel, Image</div></div>
       </div>
       <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
         <div class="upload-zone" style="flex:1;min-width:200px" onclick="document.getElementById('pi-autofetch-input').click()">
@@ -2175,7 +2175,7 @@ async function fetchFromPI() {
       contentParts = [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }, { type: 'text', text: EXTRACT_PROMPT }];
     }
 
-    setFetchStatus('<i class="ti ti-loader"></i> Claude is extracting details…', 'background:rgba(232,168,76,0.1);color:var(--accent);border:1px solid rgba(232,168,76,0.2)');
+    setFetchStatus('<i class="ti ti-loader"></i> Extracting details…', 'background:rgba(232,168,76,0.1);color:var(--accent);border:1px solid rgba(232,168,76,0.2)');
 
     const res = await fetch('/api/extract', {
       method: 'POST',
