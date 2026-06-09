@@ -2067,14 +2067,15 @@ const EXTRACT_PROMPT = `You are a proforma invoice parser. Extract all available
 }
 Rules:
 - order_channel: one of Alibaba, Email, WeChat, WhatsApp, Direct / In-person
-- currency: one of CNY, USD, INR, EUR
+- currency: one of CNY, USD, INR, EUR — RMB = CNY, ¥ = CNY
 - payment_mode: one of Alibaba Trade Assurance, PayPal, Bank transfer (SWIFT), Alipay, WeChat Pay, Cash, Credit card
 - T/T = Bank transfer (SWIFT)
+- shipping_cost: numeric value only from any "shipping fee" or "freight" line; use "" if blank or "/"
 - skus[].name = SHORT generic name 2-4 words grouping similar items (e.g. all trash bin variants → "Sensor Trash Bin")
 - skus[].product = full supplier description text
 - skus[].unit_price = number only, no currency symbol
 - order_date and eta in YYYY-MM-DD format
-- notes = payment terms + shipment date + any remarks
+- notes = payment terms + shipment terms (EXW/FOB/CIF) + any remarks
 Return ONLY the JSON. No markdown. No explanation.`;
 
 function handlePIUpload(input) {
